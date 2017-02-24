@@ -1,0 +1,5 @@
+﻿Jack:
+        For our first commit, we implemented a rudimentary version of the alphabeta search algorithm. For my task, I created an algorithm that sorts the children nodes based on their utility values. I did this using a modified version of quicksort, which I may change in the future for optimization reasons. However, its outputted result is a list of children game states that is ordered from lowest utility to highest utility. Since we do not have our code fully implemented, I have yet to fully test the sorting algorithm out. However, it should be alright for the time being. In terms of the documentation, I had no issues with this assignment.
+
+
+I also added some skeleton (commented-out) code for the getChildren() method of GameState. We have yet to implement any methods in this class, but our goal is to get these methods implemented for the next commit. Details on the getChildren method (i.e. how we are going to approach the method) are shown in comments under the method.
