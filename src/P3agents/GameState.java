@@ -123,16 +123,352 @@ public class GameState {
      *
      * @return All possible actions and their associated resulting game state
      */
-    public List<GameStateChild> getChildren() {
-    	/**
-    	 * SKELETON CODE:
-    	 * We know that, there are 16 possible moves that can be done if there are 2 footmen.
-    	 * We also know that there is either 5 or 25 moves that the enemy can make can do depending on whether or not
-    	 * there is one or two archers.
-    	 * To generate children, we will create unique states where each footman moves up, moves down, moves left, moves right, and attacks (if possible).
-    	 * For the next set of children nodes (i.e. when it is the enemy's turn, we will create unique states for when the enemy can move up, left, right, down, and attack, if possible).
-    	 * Our terminal state is when either side doesn't have any players remaining.
-    	 */
+    public List<GameStateChild> getChildren(State.StateView state, int playerNum) {
+        //Method currently takes parameters, which is different than before. FIX FOR FINAL COMMIT.
+        int opposingPlayerNum;
+        
+        if (playerNum == 0)
+            opposingPlayerNum = 1;
+        else
+            opposingPlayerNum = 0;
+        
+        List<GameStateChild> children = new ArrayList<GameStateChild>();
+        
+        List<UnitView> currPlayerUnitViews = state.getUnits(playerNum);
+        List<UnitView> opposingPlayerUnitViews = state.getUnits(opposingPlayerNum);
+        
+        //Checks to see whether or not current state is terminal. Returns empty list if that is the case.
+        if((currPlayerUnitViews.size() == 0) || (opposingPlayerUnitViews.size() == 0))
+            return children;
+        
+        
+        List<Unit> playerUnits = new ArrayList<Unit>();
+        List<Unit> opposingPlayerUnits = new ArrayList<Unit>();
+        
+        for(UnitView unitView : currPlayerUnitViews) {
+            Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
+            unit.setxPosition(unitView.getXPosition());
+            unit.setyPosition(unitView.getYPosition());
+            unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
+            unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
+            playerUnits.add(unit);
+        }
+        
+        for(UnitView unitView : opposingPlayerUnitViews) {
+            Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
+            unit.setxPosition(unitView.getXPosition());
+            unit.setyPosition(unitView.getYPosition());
+            unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
+            unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
+            opposingPlayerUnits.add(unit);
+        }
+        
+        if (playerNum == 0) {
+            
+            if(playerUnits.size() == 1) {
+                Unit footman = playerUnits.get(0);
+                int currX = footman.getxPosition();
+                int currY = footman.getyPosition();
+                
+                if(doesLocationExist(state, currX + 1, currY)) {
+                    footman.setxPosition(currX + 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX, currY + 1)) {
+                    footman.setyPosition(currY + 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX - 1, currY)) {
+                    footman.setxPosition(currX - 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX, currY - 1)) {
+                    footman.setyPosition(currY - 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+            } else {
+                Unit footman1 = playerUnits.get(0);
+                Unit footman2 = playerUnits.get(1);
+                int currX1 = footman1.getxPosition();
+                int currY1 = footman1.getyPosition();
+                int currX2 = footman2.getxPosition();
+                int currY2 = footman2.getyPosition();
+                
+                if(doesLocationExist(state, currX1 + 1, currY1)) {
+                    footman1.setxPosition(currX1 + 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        footman2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        footman2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        footman2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        footman2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1, currY1 + 1)) {
+                    footman1.setyPosition(currY1 + 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        footman2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        footman2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        footman2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        footman2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1 - 1, currY1)) {
+                    footman1.setxPosition(currX1 - 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        footman2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        footman2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        footman2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        footman2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1, currY1 - 1)) {
+                    footman1.setyPosition(currY1 - 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        footman2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        footman2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        footman2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        footman2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+            }
+            
+        }
+        
+        if (playerNum == 1) {
+            if(playerUnits.size() == 1) {
+                Unit archer = playerUnits.get(0);
+                int currX = archer.getxPosition();
+                int currY = archer.getyPosition();
+                
+                if(doesLocationExist(state, currX + 1, currY)) {
+                    archer.setxPosition(currX + 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX, currY + 1)) {
+                    archer.setyPosition(currY + 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX - 1, currY)) {
+                    archer.setxPosition(currX - 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+                
+                if(doesLocationExist(state, currX, currY - 1)) {
+                    archer.setyPosition(currY - 1);
+                    children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                }
+            } else {
+                Unit archer1 = playerUnits.get(0);
+                Unit archer2 = playerUnits.get(1);
+                int currX1 = archer1.getxPosition();
+                int currY1 = archer1.getyPosition();
+                int currX2 = archer2.getxPosition();
+                int currY2 = archer2.getyPosition();
+                
+                if(doesLocationExist(state, currX1 + 1, currY1)) {
+                    archer1.setxPosition(currX1 + 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        archer2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        archer2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        archer2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        archer2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1, currY1 + 1)) {
+                    archer1.setyPosition(currY1 + 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        archer2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        archer2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        archer2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        archer2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1 - 1, currY1)) {
+                    archer1.setxPosition(currX1 - 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        archer2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        archer2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        archer2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        archer2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                if(doesLocationExist(state, currX1, currY1 - 1)) {
+                    archer1.setyPosition(currY1 - 1);
+                    
+                    if(doesLocationExist(state, currX2 + 1, currY2)) {
+                        archer2.setxPosition(currX2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 + 1)) {
+                        archer2.setyPosition(currY2 + 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2 - 1, currY2)) {
+                        archer2.setxPosition(currX2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                    if(doesLocationExist(state, currX2, currY2 - 1)) {
+                        archer2.setyPosition(currY2 - 1);
+                        children.add(generateNewState(playerUnits, opposingPlayerUnits, 0));
+                    }
+                }
+                
+                //As of right now, this does not account for when footmen / achers attack their opponents as a move. This will
+                //be accounted for in the future.
+            }
+            
+            
+        }
+        
+        /**
+         * SKELETON CODE:
+         * We know that, there are 16 possible moves that can be done if there are 2 footmen.
+         * We also know that there is either 5 or 25 moves that the enemy can make can do depending on whether or not
+         * there is one or two archers.
+         * To generate children, we will create unique states where each footman moves up, moves down, moves left, moves right, and attacks (if possible).
+         * For the next set of children nodes (i.e. when it is the enemy's turn, we will create unique states for when the enemy can move up, left, right, down, and attack, if possible).
+         * Our terminal state is when either side doesn't have any players remaining.
+         */
         return null;
+    }
+    
+    //Generates a new child state depending on the position of units as well as the current player.
+    public GameStateChild generateNewState(List<Unit> playerUnits, List<Unit> opposingUnits, int playerNum) {
+        StateBuilder builder = new StateBuilder();
+        for(Unit opposingUnit : opposingUnits) {
+            builder.addUnit(opposingUnit, opposingUnit.getxPosition(), opposingUnit.getyPosition());
+        }
+        for(Unit playerUnit : playerUnits) {
+            builder.addUnit(playerUnit, playerUnit.getxPosition(), playerUnit.getyPosition());
+        }
+        
+        State newState = builder.build();
+        
+        newState.addPlayer(0);
+        newState.addPlayer(1);
+        
+        GameStateChild child = new GameStateChild(newState.getView(playerNum));
+        
+        return child;
+        
+    }
+    
+    //Determines whether or not a xy-coordinate exists within the current map.
+    public boolean doesLocationExist(State.StateView state, int x, int y) {
+        int xMax = state.getXExtent();
+        int yMax = state.getYExtent();
+        
+        if(x < 0 || y < 0) {
+            return false;
+        }
+        
+        if((x > xMax) || (y > yMax)) {
+            return false;
+            
+        } else {
+            return true;
+            
+        }
+    }
+    
+    //Determines whether or not a potential move for a unit is blocked by a resource.
+    public boolean isLocationBlocked(State.StateView state, int x, int y) {
+        List<ResourceView> resourceLocations = state.getAllResourceNodes();
+        
+        for(ResourceView resource : resourceLocations) {
+            if(resource.getXPosition() == x && resource.getYPosition() == y) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }

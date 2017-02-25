@@ -174,13 +174,12 @@ public class MinimaxAlphaBeta extends Agent {
     	int left = first - 1;
     	int right = last + 1;
     	while (true) {
-    		while(childList[left].state.getUtility() < pivot) {
-    			left++;
-    		}
-    	
-    		while(childList[right].state.getUtility() > pivot) {
-    			right--;
-    		}
+            do {
+                left++;
+            } while(childList[left].state.getUtility() < pivot);
+            do {
+                right--;
+            } while(childList[right].state.getUtility() > pivot);
     	
     		if(left < right) {
     			GameStateChild child = childList[left];
