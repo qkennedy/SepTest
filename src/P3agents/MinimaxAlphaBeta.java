@@ -58,6 +58,9 @@ public class MinimaxAlphaBeta extends Agent {
 
     }
 
+    public GameStateChild winnerKid = null;
+    public double winAlpha = Double.MIN_VALUE;
+    public int startDepth;
     /**
      * You will implement this.
      *
@@ -75,9 +78,52 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
-        return node;
+    	startDepth = depth;
+    	alphaBeta(node, depth, alpha, beta, true);
+    	return winnerKid;
+    	
     }
+    
 
+    public double alphaBeta(GameStateChild node, int depth, double alpha, double beta, boolean isA){
+    	List<GameStateChild> chillens = new ArrayList<GameStateChild>();
+    	if(depth==0 || isTerminal(node)){
+    		if(isA){
+    			return beta;
+    		} else {
+    			return alpha;
+    		}
+    	}
+    	if(isA){
+    		chillens = orderChildrenWithHeuristics(node.state.getChildren());
+    		for(GameStateChild kid: chillens){
+
+    			alpha = Math.max(alpha, alphaBeta(kid, depth-1, alpha, beta, !isA));
+    			if(depth - 1 == startDepth){
+    				if(alpha>winAlpha){
+    					winnerKid = kid;
+    					winAlpha=alpha;
+    				}
+    			}
+    			if(beta<=alpha){
+    				break;
+    			}
+    		}
+    	} else {
+    		chillens = orderChildrenWithHeuristics(node.state.getChildren());
+    		for(GameStateChild kid: chillens){
+    			beta = Math.min(beta, alphaBeta(kid, depth-1, alpha, beta, !isA));
+    			if(beta<=alpha){
+    				break;
+    			}
+    		}
+    	}
+    	return 0;
+    }
+    
+    public static boolean isTerminal(GameStateChild kid){
+    	return kid.state.getChildren().size() == 0;
+    }
     /**
      * You will implement this.
      *

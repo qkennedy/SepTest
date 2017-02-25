@@ -6,6 +6,7 @@ import edu.cwru.sepia.action.DirectedAction;
 import edu.cwru.sepia.action.TargetedAction;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
+import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 import edu.cwru.sepia.util.Direction;
 
 import java.util.*;
@@ -19,7 +20,13 @@ import java.util.*;
  * but do not delete or change the signatures of the provided methods.
  */
 public class GameState {
-
+	int xLim;
+	int yLim;
+	int playerNum;
+	int enemyNum;
+	List<Integer> enemyUnitIDs;
+	List<Integer> unitIDs;
+	State.StateView state;
     /**
      * You will implement this constructor. It will
      * extract all of the needed state information from the built in
@@ -42,6 +49,10 @@ public class GameState {
      * @param state Current state of the episode
      */
     public GameState(State.StateView state) {
+    	//Need to initialize playernums somehow
+		enemyUnitIDs = state.getUnitIds(enemyNum);
+		unitIDs = state.getUnitIds(playerNum);
+		this.state = state;
     }
 
     /**
@@ -63,7 +74,37 @@ public class GameState {
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
+    	//Health Left
+    	double archerHealthSum = 0;
+    	for(Integer i: enemyUnitIDs){
+    		archerHealthSum += state.getUnit(i).getHP();
+    	}
+    	archerHealthSum = -0.5 * archerHealthSum;
+    	double footmanHealthSum = 0;
+    	for(Integer i: enemyUnitIDs){
+    		footmanHealthSum += state.getUnit(i).getHP();
+    	}
+    	footmanHealthSum = 0.3 * footmanHealthSum;
+    	//Dist. to Archer
+    	
+    	//Within Range
+    	
+    	//Dist to walls
+    	
+    	//Expect the UNEXPECTED
         return 0.0;
+    }
+    public double getDistToArcher(int uid){
+    	UnitView fm = state.getUnit(uid);
+    	int x = fm.getXPosition();
+    	int y = fm.getYPosition();
+    	int dx = xLim;
+    	int dy = yLim;
+    	for(Integer i: enemyUnitIDs){
+    		dx = Math.min(dx, Math.abs(state.getUnit(i).getXPosition() - x));
+    		dy = Math.abs(state.getUnit(i).getYPosition() - y);
+    	}
+    	return (dx + dy);
     }
 
     /**
