@@ -4,9 +4,12 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.action.ActionType;
 import edu.cwru.sepia.action.DirectedAction;
 import edu.cwru.sepia.action.TargetedAction;
+import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
 import edu.cwru.sepia.environment.model.state.State;
+import edu.cwru.sepia.environment.model.state.State.StateBuilder;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
+import edu.cwru.sepia.environment.model.state.UnitTemplate;
 import edu.cwru.sepia.util.Direction;
 
 import java.util.*;
@@ -22,7 +25,7 @@ import java.util.*;
 public class GameState {
 	int xLim;
 	int yLim;
-	int playerNum;
+	int playerNum = 0;
 	int enemyNum;
 	List<Integer> enemyUnitIDs;
 	List<Integer> unitIDs;
@@ -123,7 +126,7 @@ public class GameState {
      *
      * @return All possible actions and their associated resulting game state
      */
-    public List<GameStateChild> getChildren(State.StateView state, int playerNum) {
+    public List<GameStateChild> getChildren() {
         //Method currently takes parameters, which is different than before. FIX FOR FINAL COMMIT.
         int opposingPlayerNum;
         
@@ -417,7 +420,7 @@ public class GameState {
          * For the next set of children nodes (i.e. when it is the enemy's turn, we will create unique states for when the enemy can move up, left, right, down, and attack, if possible).
          * Our terminal state is when either side doesn't have any players remaining.
          */
-        return null;
+        return children;
     }
     
     //Generates a new child state depending on the position of units as well as the current player.

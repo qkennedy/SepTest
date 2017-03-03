@@ -79,27 +79,22 @@ public class MinimaxAlphaBeta extends Agent {
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
     	startDepth = depth;
+    	winnerKid = node;
     	alphaBeta(node, depth, alpha, beta, true);
     	return winnerKid;
-    	
     }
     
 
     public double alphaBeta(GameStateChild node, int depth, double alpha, double beta, boolean isA){
     	List<GameStateChild> chillens = new ArrayList<GameStateChild>();
     	if(depth==0 || isTerminal(node)){
-    		if(isA){
-    			return beta;
-    		} else {
-    			return alpha;
-    		}
+    			return node.state.getUtility();
     	}
     	if(isA){
     		chillens = orderChildrenWithHeuristics(node.state.getChildren());
     		for(GameStateChild kid: chillens){
-
     			alpha = Math.max(alpha, alphaBeta(kid, depth-1, alpha, beta, !isA));
-    			if(depth - 1 == startDepth){
+    			if(depth == startDepth){
     				if(alpha>winAlpha){
     					winnerKid = kid;
     					winAlpha=alpha;
@@ -125,7 +120,7 @@ public class MinimaxAlphaBeta extends Agent {
     	return kid.state.getChildren().size() == 0;
     }
     /**
-     * You will implement this.
+     * You will implement this.                                                 
      *
      * Given a list of children you will order them according to heuristics you make up.
      * See the assignment description for suggestions on heuristics to use when sorting.

@@ -1,0 +1,23 @@
+[33mcommit b1df081347c742bc491c17b8e69c80571277dec9[m
+Author: JLaRue96 <jvl13@case.edu>
+Date:   Fri Feb 24 20:10:23 2017 -0500
+
+    Modified the getChildren and orderByHeuristic functions of GameState and MinimaxAlphaBeta, respectively
+
+[33mcommit bf0fe9164cc9da5ca4d9380206e2b679c28ac61d[m
+Author: JLaRue96 <jvl13@case.edu>
+Date:   Fri Feb 24 20:06:59 2017 -0500
+
+    Added my section to the README.
+
+[33mcommit 06941416fc0a5dd69eda7f28227395f722268cb0[m
+Author: unknown <qck@case.edu>
+Date:   Fri Feb 24 19:50:14 2017 -0500
+
+    added some utility to gamestate, changed main portion of Minimax
+
+[33mcommit deee881766ed01732685d1f8183dcb2d1513a063[m
+Author: JLaRue96 <jvl13@case.edu>
+Date:   Fri Feb 24 16:33:03 2017 -0500
+
+    First commit
