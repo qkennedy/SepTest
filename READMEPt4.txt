@@ -1,0 +1,5 @@
+Jack’s First Commit:
+
+   For the first commit of Project 4, I essentially implemented most of GameState. I coded the initial constructor, isGoal(), generateChildren(), heuristic(), compareTo() and equals(). There are some rather elementary implementations that I wish to fix in the future, like the heuristic method. Additionally, I transferred the A* method from our second project into PlannerAgent, and outlined what needed to be changed in the method in order to work for this implementation. Beyond that, I began to work on PEAgent, but realized that I needed some more time to study the StripsAction interface to understand exactly how to implement the method. I will be fully implementing this method within the next two weeks.
+
+Since the code is not currently in working form, we have yet to generate any working plans. Therefore, only the README is included for now. Like before, I have had no issues with the documentation. All is well!
