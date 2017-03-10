@@ -1,4 +1,4 @@
-﻿Jack:
+Jack:
 	For our first commit, we implemented a rudimentary version of the alphabeta search algorithm. For my task, I created an algorithm that sorts the children nodes based on their utility values. I did this using a modified version of quicksort, which I may change in the future for optimization reasons. However, its outputted result is a list of children game states that is ordered from lowest utility to highest utility. Since we do not have our code fully implemented, I have yet to fully test the sorting algorithm out. However, it should be alright for the time being. In terms of the documentation, I had no issues with this assignment.
 
 I also added some skeleton (commented-out) code for the getChildren() method of GameState. We have yet to implement any methods in this class, but our goal is to get these methods implemented for the next commit. Details on the getChildren method (i.e. how we are going to approach the method) are shown in comments under the method.
@@ -12,3 +12,11 @@ Jack: After looking at my original quick sort equation, I modified it slightly a
 Commit 3:
 Quinn Kennedy
 	On this commit, I worked on getting the configuration functional, I changed around the implementation of minimax to allow it to function on 0 plies.  I also changed a couple lines of it hopefully to avoid bugs.  I contributed to restructuring how we generate the children states, and I continued working on making the getutility to work.
+
+
+Commit 3:
+Jack La Rue
+	With this commit, I attempted to add additional features to getChildren, including a means of passing primitive actions to the new state. Besides that, I modified the constructor, the getUtility, and the generateNewState methods. 
+So far, I’m not sure if this is going to work. However, I’m confident that, to an extent, our ideas are down on paper.
+
+***Edit: I only realize now that I didn’t implement a full means of mapping archers attacking others in range. Didn’t get to it on time.
