@@ -9,6 +9,7 @@ public class GatherWoodAction implements StripsAction {
     @Override
     public GameState apply(GameState state) {
         GameState copy = state;
+        copy.
         return null;
     }
     

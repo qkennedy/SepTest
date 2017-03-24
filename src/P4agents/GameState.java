@@ -46,7 +46,6 @@ public class GameState implements Comparable<GameState> {
 	public int peasID;
 	public int townhallID;
 	public Position thPos;
-	public List<ResourceView> resNodes;
 	public List<ResourceView> goldNodes;
 	public List<ResourceView> woodNodes;
     /**
@@ -82,9 +81,8 @@ public class GameState implements Comparable<GameState> {
             	this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
             }
     	}
-    	this.resNodes = state.getAllResourceNodes();
     	this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
-    	this.goldNodes = state.getResourceNodes(Type.TREE);
+    	this.woodNodes = state.getResourceNodes(Type.TREE);
     	
     }
     
@@ -199,33 +197,6 @@ public class GameState implements Comparable<GameState> {
     	}
     	
         return children;
-    }
-    
-    //Helper method that generates a Unit from a UnitView.
-    public UnitView moveUnit(Unit.UnitView unitView, int x, int y) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(x);
-        unit.setyPosition(y);
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
-    
-    	return unit.getView();
-    }
-    public UnitView gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(unitView.getXPosition());
-        unit.setyPosition(unitView.getYPosition());
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(type, amt);
-    
-    	return unit.getView();
-    }
-    public ResourceView gatherFromNode(int resID) {
-    	ResourceView prev = resNodes.get(resID);
-        ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
-    	return node.getView();
     }
     
     //Helper method: Determines if a position on the map exists.
@@ -358,9 +329,53 @@ public class GameState implements Comparable<GameState> {
     	UnitView view = units.get(pID);
     	
     }
-    public void gatherFromNode(int pID, int resID){
-    	ResourceView res = 
-    	UnitView tmp = gatherToUnit(pID, );
+    public void gatherFromNode(int pID, int resID, ResourceType type){	
+    	UnitView tmp = gatherToUnit(units.get(pID), type, 100);
+    	if(type.equals(ResourceType.GOLD)){
+        	ResourceView rView = gatherGoldNode(resID);
+        	goldNodes.remove(resID);
+        	goldNodes.add(resID, rView);
+    	} else {
+        	ResourceView rView = gatherWoodNode(resID);
+        	woodNodes.remove(resID);
+        	woodNodes.add(resID, rView);
+    	}
+    	units.remove(pID);
+    	units.add(pID, tmp);
+    	
+    	
+    }
+    
+    //Helper method that generates a Unit from a UnitView.
+    public UnitView moveUnit(Unit.UnitView unitView, int x, int y) {
+        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
+        unit.setxPosition(x);
+        unit.setyPosition(y);
+        unit.setHP(unitView.getHP());
+        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
+        unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
+    
+    	return unit.getView();
+    }
+    public UnitView gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
+        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
+        unit.setxPosition(unitView.getXPosition());
+        unit.setyPosition(unitView.getYPosition());
+        unit.setHP(unitView.getHP());
+        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
+        unit.setCargo(type, amt);
+    
+    	return unit.getView();
+    }
+    public ResourceView gatherWoodNode(int resID) {
+    	ResourceView prev = woodNodes.get(resID);
+        ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
+    	return node.getView();
+    }
+    public ResourceView gatherGoldNode(int resID) {
+    	ResourceView prev = woodNodes.get(resID);
+        ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
+    	return node.getView();
     }
     public void deposit(int uID, int thID){
     	
