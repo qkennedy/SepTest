@@ -1,6 +1,7 @@
 package P4agents;
 
 import edu.cwru.sepia.environment.model.state.ResourceNode;
+import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.State.StateBuilder;
 import edu.cwru.sepia.environment.model.state.Unit;
@@ -36,11 +37,13 @@ public class GameState implements Comparable<GameState> {
 	private int requiredWood;
 	private int xExt;
 	private int yExt;
-	private List<Unit.UnitView> units;
+	public List<Unit.UnitView> units;
 	private boolean buildPeasants;
-	private Position peasPos;
-	private int peasID;
-	private int townhallID;
+	public Position peasPos;
+	public int peasID;
+	public int townhallID;
+	public Position thPos;
+	public List<ResourceView> resNodes;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -71,8 +74,10 @@ public class GameState implements Comparable<GameState> {
             }
             if (unitType.equals("townhall")) {
             	this.townhallID = unitId;
+            	this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
             }
     	}
+    	this.resNodes = state.getAllResourceNodes();
     	
     }
 

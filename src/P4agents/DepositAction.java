@@ -1,26 +1,23 @@
 package P4agents;
 
+import edu.cwru.sepia.environment.model.state.Unit.UnitView;
+
 public class DepositAction implements StripsAction {
-	public int uID;
+
 	/**
 	 * This class takes a unit that is affected, and a unit doing the action
 	 * This sets the framework for how the STRIPS Actions should be implemented
 	 * @param uID
 	 * @param tcID
 	 */
-	public DepositAction(int uID, int tcID){
-		this.uID = uID;
-	}
-	@Override
-	public int getUID() {
-		// TODO Auto-generated method stub
-		return uID;
-	}
-
 	@Override
 	public boolean preconditionsMet(GameState state) {
-		// TODO Auto-generated method stub
-		return false;
+		UnitView peas = state.units.get(state.peasID);
+		Position peasPos = state.peasPos;
+		Position thPos = state.thPos;
+		double xd = Math.abs(peasPos.x - thPos.x);
+		double yd = Math.abs(peasPos.y - thPos.y);
+		return((xd <= 1 && yd <= 1) && peas.getCargoAmount()>0);
 	}
 
 	@Override
@@ -28,10 +25,4 @@ public class DepositAction implements StripsAction {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	public int getUnitAffected() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
 }

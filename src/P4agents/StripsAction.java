@@ -8,7 +8,6 @@ import P4agents.GameState;
  * of a StripsAction.
  */
 public interface StripsAction {
-	public int getUID();
     /**
      * Returns true if the provided GameState meets all of the necessary conditions for this action to successfully
      * execute.
