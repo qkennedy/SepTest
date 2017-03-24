@@ -50,6 +50,7 @@ public class GameState implements Comparable<GameState> {
     public List<ResourceView> goldNodes;
     public List<ResourceView> woodNodes;
     public List<StripsAction> actions;
+    public List<Direction> directionList;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -70,6 +71,14 @@ public class GameState implements Comparable<GameState> {
         this.xExt = state.getXExtent();
         this.yExt = state.getYExtent();
         this.units = state.getUnits(playernum);
+        
+        Direction[] directions = {Direction.EAST, Direction.NORTH, Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTH, Direction.SOUTHEAST, Direction.SOUTHWEST, Direction.WEST};
+        List<Direction> directionList = new ArrayList<Direction>();
+        for(int i = 0; i <= directions.length - 1; i++) {
+            directionList.add(directions[i]);
+        }
+        
+        this.directionList = directionList;
         
         for(int unitId : state.getUnitIds(playerNum)) {
             Unit.UnitView unit = state.getUnit(unitId);
@@ -123,79 +132,45 @@ public class GameState implements Comparable<GameState> {
     public List<GameState> generateChildren() {
         
         List<GameState> children = new ArrayList<GameState>();
-        int peasantID = -1;
         
-        State newStateMovements = new State();
         
-        for(ResourceNode.ResourceView resource : state.getAllResourceNodes()) {
-            ResourceNode resourceNode = new ResourceNode(resource.getType(), resource.getXPosition(), resource.getYPosition(), resource.getAmountRemaining(), resource.getID());
-            newStateMovements.addResource(resourceNode);
+        DepositAction depot = new DepositAction(peasID, townhallID);
+        
+        if(depot.preconditionsMet(this)) {
+            GameState child = depot.apply(this);
+            child.setParent(this);
+            children.add(child);
         }
         
-        for(int unitId : state.getUnitIds(playerNum)) {
-            Unit.UnitView unit = state.getUnit(unitId);
-            String unitType = unit.getTemplateView().getName().toLowerCase();
-            if(unitType.equals("peasant")) {
-                peasantID = unitId;
+        for(ResourceView woodSource : woodNodes) {
+            GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
+            
+            if(woodAction.preconditionsMet(this)) {
+                GameState child = woodAction.apply(this);
+                child.setParent(this);
+                children.add(child);
+            }
+        }
+        
+        for(ResourceView goldSource : goldNodes) {
+            GatherGoldAction goldAction = new GatherGoldAction(peasID, goldSource.getID());
+            
+            if(goldAction.preconditionsMet(this)) {
+                GameState child = goldAction.apply(this);
+                child.setParent(this);
+                children.add(child);
+            }
+        }
+        
+        for(Direction direction : directionList) {
+            MoveAction move = new MoveAction(peasID, direction);
+            
+            if(move.preconditionsMet(this)) {
+                GameState child = move.apply(this);
+                child.setParent(this);
+                children.add(child);
             }
             
-            if(unitType.equals("townhall")) {
-                Unit u = createUnit(unit, unit.getXPosition(), unit.getYPosition());
-                newStateMovements.addUnit(u, u.getxPosition(), u.getyPosition());
-            }
-        }
-        
-        Unit.UnitView peasant = state.getUnit(peasantID);
-        int px = peasant.getXPosition();
-        int py = peasant.getYPosition();
-        
-        Position pPos = new Position(px, py);
-        List<Position> adjPos = pPos.getAdjacentPositions();
-        
-        for(Position adj : adjPos) {
-            for(ResourceNode.ResourceView resource : state.getAllResourceNodes()) {
-                if(resource.getXPosition() == adj.x && resource.getYPosition() == adj.y) {
-                    //Add to the new state a mapping of the peasant mining the resource.
-                    break;
-                }
-            }
-            
-            for(int unitId : state.getUnitIds(playerNum)) {
-                Unit.UnitView unit = state.getUnit(unitId);
-                String unitType = unit.getTemplateView().getName().toLowerCase();
-                if (unitType.equals("townhall") && unit.getXPosition() == adj.x && unit.getYPosition() == adj.y) {
-                    //Add to the new state a mapping of the peasant depositing resources if it has them.
-                    break;
-                }
-            }
-        }
-        
-        if(positionExists(px + 1, py)) {
-            Unit u = createUnit(peasant, px + 1, py);
-            newStateMovements.addUnit(u, px + 1, py);
-            children.add(new GameState(newStateMovements.getView(playerNum), playerNum, requiredGold, requiredWood, buildPeasants));
-            newStateMovements.removeUnit(peasantID);
-        }
-        
-        if(positionExists(px - 1, py)) {
-            Unit u = createUnit(peasant, px - 1, py);
-            newStateMovements.addUnit(u, px - 1, py);
-            children.add(new GameState(newStateMovements.getView(playerNum), playerNum, requiredGold, requiredWood, buildPeasants));
-            newStateMovements.removeUnit(peasantID);
-        }
-        
-        if(positionExists(px, py + 1)) {
-            Unit u = createUnit(peasant, px, py + 1);
-            newStateMovements.addUnit(u, px, py + 1);
-            children.add(new GameState(newStateMovements.getView(playerNum), playerNum, requiredGold, requiredWood, buildPeasants));
-            newStateMovements.removeUnit(peasantID);
-        }
-        
-        if(positionExists(px, py - 1)) {
-            Unit u = createUnit(peasant, px, py - 1);
-            newStateMovements.addUnit(u, px, py - 1);
-            children.add(new GameState(newStateMovements.getView(playerNum), playerNum, requiredGold, requiredWood, buildPeasants));
-            newStateMovements.removeUnit(peasantID);
         }
         
         return children;
