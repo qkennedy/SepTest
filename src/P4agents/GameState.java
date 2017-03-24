@@ -222,10 +222,10 @@ public class GameState implements Comparable<GameState> {
     
     	return unit.getView();
     }
-    public ResourceView GatherFromUnit(int resID) {
+    public ResourceView GatherFromNode(int resID) {
+    	ResourceView prev = resNodes.get(resID)
+        ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
     	
-        ResourceNode node = newResourceView(node).;
-       
     
     	return unit.getView();
     }

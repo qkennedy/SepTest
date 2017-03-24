@@ -4,8 +4,9 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
 
 public class GatherGoldAction implements StripsAction {
-    
+	
     public ResourceView resNode;
+    
     @Override
     public GameState apply(GameState state) {
         return null;
@@ -29,5 +30,4 @@ public class GatherGoldAction implements StripsAction {
     public Action ResultantAction(GameState state) {
         return Action.createCompoundGather(state.peasID, resNode.getID());
     }
-    
 }
