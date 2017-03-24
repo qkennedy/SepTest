@@ -2,11 +2,14 @@ package P4agents;
 
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
+import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
+import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.State.StateBuilder;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.environment.model.state.UnitTemplate;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
+import edu.cwru.sepia.util.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,8 @@ public class GameState implements Comparable<GameState> {
 	public int townhallID;
 	public Position thPos;
 	public List<ResourceView> resNodes;
+	public List<ResourceView> goldNodes;
+	public List<ResourceView> woodNodes;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -78,8 +83,11 @@ public class GameState implements Comparable<GameState> {
             }
     	}
     	this.resNodes = state.getAllResourceNodes();
+    	this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
+    	this.goldNodes = state.getResourceNodes(Type.TREE);
     	
     }
+    
 
     /**
      * Unlike in the first A* assignment there are many possible goal states. As long as the wood and gold requirements
@@ -89,7 +97,6 @@ public class GameState implements Comparable<GameState> {
      * @return true if the goal conditions are met in this instance of game state.
      */
     public boolean isGoal() {
-        // TODO: Implement me!
     	
     	int townhallId = -1;
     	
@@ -195,7 +202,7 @@ public class GameState implements Comparable<GameState> {
     }
     
     //Helper method that generates a Unit from a UnitView.
-    public Unit createUnit(Unit.UnitView unitView, int x, int y) {
+    public UnitView MoveUnit(Unit.UnitView unitView, int x, int y) {
         Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
         unit.setxPosition(x);
         unit.setyPosition(y);
@@ -203,7 +210,24 @@ public class GameState implements Comparable<GameState> {
         unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
         unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
     
-    	return unit;
+    	return unit.getView();
+    }
+    public UnitView GatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
+        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
+        unit.setxPosition(unitView.getXPosition());
+        unit.setyPosition(unitView.getYPosition());
+        unit.setHP(unitView.getHP());
+        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
+        unit.setCargo(type, amt);
+    
+    	return unit.getView();
+    }
+    public ResourceView GatherFromUnit(int resID) {
+    	
+        ResourceNode node = newResourceView(node).;
+       
+    
+    	return unit.getView();
     }
     
     //Helper method: Determines if a position on the map exists.
@@ -324,5 +348,22 @@ public class GameState implements Comparable<GameState> {
     public int getYExt() {
     	return yExt;
     }
-    
+    //These Methods should be stuff for changing the state to handle apply
+    public void deleteUnit(int uID){
+    	units.remove(uID);
+    }
+    public void addUnit(int uID, UnitView view){
+    	units.add(uID, view);
+    }
+    public void moveUnit(int pID, Direction dir){
+    	
+    	UnitView view = units.get(pID);
+    	view.
+    }
+    public void gatherFromNode(int pID, int resID){
+    	
+    }
+    public void deposit(int uID, int thID){
+    	
+    }
 }

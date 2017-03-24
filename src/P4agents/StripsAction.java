@@ -1,5 +1,6 @@
 package P4agents; //Modified this package.
 
+import edu.cwru.sepia.action.Action;
 import P4agents.GameState;
 
 /**
@@ -36,4 +37,5 @@ public interface StripsAction {
      * @return State resulting from successful action appliction.
      */
     public GameState apply(GameState state);
+    public Action ResultantAction(GameState state);
 }
