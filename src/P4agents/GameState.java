@@ -202,7 +202,7 @@ public class GameState implements Comparable<GameState> {
     }
     
     //Helper method that generates a Unit from a UnitView.
-    public UnitView MoveUnit(Unit.UnitView unitView, int x, int y) {
+    public UnitView moveUnit(Unit.UnitView unitView, int x, int y) {
         Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
         unit.setxPosition(x);
         unit.setyPosition(y);
@@ -212,7 +212,7 @@ public class GameState implements Comparable<GameState> {
     
     	return unit.getView();
     }
-    public UnitView GatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
+    public UnitView gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
         Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
         unit.setxPosition(unitView.getXPosition());
         unit.setyPosition(unitView.getYPosition());
@@ -222,12 +222,10 @@ public class GameState implements Comparable<GameState> {
     
     	return unit.getView();
     }
-    public ResourceView GatherFromNode(int resID) {
-    	ResourceView prev = resNodes.get(resID)
+    public ResourceView gatherFromNode(int resID) {
+    	ResourceView prev = resNodes.get(resID);
         ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
-    	
-    
-    	return unit.getView();
+    	return node.getView();
     }
     
     //Helper method: Determines if a position on the map exists.
@@ -358,10 +356,11 @@ public class GameState implements Comparable<GameState> {
     public void moveUnit(int pID, Direction dir){
     	
     	UnitView view = units.get(pID);
-    	view.
+    	
     }
     public void gatherFromNode(int pID, int resID){
-    	
+    	ResourceView res = 
+    	UnitView tmp = gatherToUnit(pID, );
     }
     public void deposit(int uID, int thID){
     	
