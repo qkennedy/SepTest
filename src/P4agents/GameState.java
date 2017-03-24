@@ -32,23 +32,24 @@ import java.util.List;
  * class/structure you use to represent actions.
  */
 public class GameState implements Comparable<GameState> {
-
-	
-	private State.StateView state;
-	private int playerNum;
-	private int requiredGold;
-	private int requiredWood;
-	private int xExt;
-	private int yExt;
-	public List<Unit.UnitView> units;
-	private boolean buildPeasants;
-	public Position peasPos;
-	public int peasID;
-	public int townhallID;
-	public Position thPos;
-	public List<ResourceView> goldNodes;
-	public List<ResourceView> woodNodes;
-	public List<StripsAction> actions;
+    
+    
+    private State.StateView state;
+    private int playerNum;
+    private int requiredGold;
+    private int requiredWood;
+    private int xExt;
+    private int yExt;
+    private GameState parent;
+    public List<Unit.UnitView> units;
+    private boolean buildPeasants;
+    public Position peasPos;
+    public int peasID;
+    public int townhallID;
+    public Position thPos;
+    public List<ResourceView> goldNodes;
+    public List<ResourceView> woodNodes;
+    public List<StripsAction> actions;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -81,10 +82,10 @@ public class GameState implements Comparable<GameState> {
                 this.townhallID = unitId;
                 this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
             }
-    	}
-    	this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
-    	this.woodNodes = state.getResourceNodes(Type.TREE);
-    	
+        }
+        this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
+        this.woodNodes = state.getResourceNodes(Type.TREE);
+        
     }
     
     
@@ -200,7 +201,7 @@ public class GameState implements Comparable<GameState> {
         return children;
     }
     
-
+    
     //Helper method that generates a Unit from a UnitView.
     public UnitView MoveUnit(Unit.UnitView unitView, int x, int y) {
         Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
@@ -345,6 +346,13 @@ public class GameState implements Comparable<GameState> {
     //--------------------------------------------------------------------------------------------------------------\\
     //Everything below this line is newly-added for the first commit. Used to modify the code for A* search.
     
+    public void setParent(GameState parent) {
+        this.parent = parent;
+    }
+    
+    public GameState getParent() {
+        return parent;
+    }
     
     public int getXExt() {
         return xExt;
@@ -364,25 +372,25 @@ public class GameState implements Comparable<GameState> {
     }
     
     public void moveUnit(int pID, Direction dir){
-    	
-    	UnitView view = units.get(pID);
-    	
+        
+        UnitView view = units.get(pID);
+        
     }
-    public void gatherFromNode(int pID, int resID, ResourceType type){	
-    	UnitView tmp = gatherToUnit(units.get(pID), type, 100);
-    	if(type.equals(ResourceType.GOLD)){
-        	ResourceView rView = gatherGoldNode(resID);
-        	goldNodes.remove(resID);
-        	goldNodes.add(resID, rView);
-    	} else {
-        	ResourceView rView = gatherWoodNode(resID);
-        	woodNodes.remove(resID);
-        	woodNodes.add(resID, rView);
-    	}
-    	units.remove(pID);
-    	units.add(pID, tmp);
-    	
-    	
+    public void gatherFromNode(int pID, int resID, ResourceType type){
+        UnitView tmp = gatherToUnit(units.get(pID), type, 100);
+        if(type.equals(ResourceType.GOLD)){
+            ResourceView rView = gatherGoldNode(resID);
+            goldNodes.remove(resID);
+            goldNodes.add(resID, rView);
+        } else {
+            ResourceView rView = gatherWoodNode(resID);
+            woodNodes.remove(resID);
+            woodNodes.add(resID, rView);
+        }
+        units.remove(pID);
+        units.add(pID, tmp);
+        
+        
     }
     
     //Helper method that generates a Unit from a UnitView.
@@ -393,8 +401,8 @@ public class GameState implements Comparable<GameState> {
         unit.setHP(unitView.getHP());
         unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
         unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
-    
-    	return unit.getView();
+        
+        return unit.getView();
     }
     public UnitView gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
         Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
@@ -403,18 +411,18 @@ public class GameState implements Comparable<GameState> {
         unit.setHP(unitView.getHP());
         unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
         unit.setCargo(type, amt);
-    
-    	return unit.getView();
+        
+        return unit.getView();
     }
     public ResourceView gatherWoodNode(int resID) {
-    	ResourceView prev = woodNodes.get(resID);
+        ResourceView prev = woodNodes.get(resID);
         ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
-    	return node.getView();
+        return node.getView();
     }
     public ResourceView gatherGoldNode(int resID) {
-    	ResourceView prev = woodNodes.get(resID);
+        ResourceView prev = woodNodes.get(resID);
         ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
-    	return node.getView();
+        return node.getView();
     }
     
     public void deposit(int uID, int thID){
