@@ -1,16 +1,23 @@
 package P4agents;
 
 import edu.cwru.sepia.action.Action;
+import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 
 public class DepositAction implements StripsAction {
     
+	public int pID, thID;
+	public ResourceType type;
     /**
      * This class takes a unit that is affected, and a unit doing the action
      * This sets the framework for how the STRIPS Actions should be implemented
      * @param uID
-     * @param tcID
+     * @param thID
      */
+	public DepositAction(int pID, int thID){
+		this.pID = pID;
+		this.thID = thID;
+	}
     @Override
     public boolean preconditionsMet(GameState state) {
         UnitView peas = state.units.get(state.peasID);
@@ -23,11 +30,11 @@ public class DepositAction implements StripsAction {
     
     @Override
     public GameState apply(GameState state) {
-        // TODO Auto-generated method stub
-        //GameState newState = state.
-        UnitView townhall = state.units.get(state.townhallID);
-        
-        return null;
+    	GameState copy = state;
+        copy.deposit(pID, thID);
+        copy.actions.add(this);
+        //TODO Add Cost Changes
+        return copy;
     }
     
     @Override

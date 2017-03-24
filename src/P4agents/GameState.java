@@ -48,7 +48,7 @@ public class GameState implements Comparable<GameState> {
 	public Position thPos;
 	public List<ResourceView> goldNodes;
 	public List<ResourceView> woodNodes;
-
+	public List<StripsAction> actions;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
