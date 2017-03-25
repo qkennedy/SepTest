@@ -41,6 +41,10 @@ public class GameState implements Comparable<GameState> {
     private int xExt;
     private int yExt;
     private GameState parent;
+    private double cost;
+    private double hVal;
+    public double gold;
+    public double wood;
     public List<Unit.UnitView> units;
     private boolean buildPeasants;
     public Position peasPos;
@@ -261,28 +265,12 @@ public class GameState implements Comparable<GameState> {
      * @return The value estimated remaining cost to reach a goal state from this state.
      */
     public double heuristic() {
-        
-        double adjResourceToCollect = 0.0;
-        double adjTownhallToDeposit = 0.0;
-        
-        List<Position> adjPos = peasPos.getAdjacentPositions();
-        Unit.UnitView peasant = state.getUnit(peasID);
-        Unit.UnitView townhall = state.getUnit(townhallID);
-        int peasantCargo = peasant.getCargoAmount();
-        
-        for(Position adj : adjPos) {
-            for(ResourceNode.ResourceView resource : state.getAllResourceNodes()) {
-                if(resource.getXPosition() == adj.x && resource.getYPosition() == adj.y && peasantCargo == 0) {
-                    adjResourceToCollect = 15.0;
-                }
-            }
-            
-            if(townhall.getXPosition() == adj.x && townhall.getYPosition() == adj.y && peasantCargo != 0) {
-                adjTownhallToDeposit = 20.0;
-            }
-        }
-        
-        return adjResourceToCollect + adjTownhallToDeposit;
+    	//First, have a subtracted amount from the amount of each resource we have
+    	return gold + wood;
+    }
+    public double distFromWood(int pID){
+    	
+    	return 0.0;
     }
     
     /**
@@ -294,7 +282,7 @@ public class GameState implements Comparable<GameState> {
      */
     public double getCost() {
         // TODO: Implement me!
-        return 0.0;
+        return parent.cost + 1;
     }
     
     /**
@@ -428,7 +416,11 @@ public class GameState implements Comparable<GameState> {
     public void deposit(int uID, int thID){
         UnitView peasantview = units.get(uID);
         Unit.UnitView townhallview = state.getUnit(townhallID);
-        
+        if(peasantview.getCargoType().equals(ResourceType.GOLD)){
+        	gold += peasantview.getCargoAmount();
+        } else {
+        	wood += peasantview.getCargoAmount();
+        }
         DepositToUnit(townhallview, peasantview.getCargoType(), peasantview.getCargoAmount());
         DepositFromUnit(peasantview, peasantview.getCargoType(), 0);
         
