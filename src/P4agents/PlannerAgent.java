@@ -160,8 +160,10 @@ public class PlannerAgent extends Agent {
             List<GameState> currChildren = curr.generateChildren();
             
             if(currChildren.size() != 0) {
-                sort(currChildren);
-                openList.add(currChildren.get(0)); //Adds the child with the lowest cost to the priority queue.
+                for(GameState child: currChildren){
+                	openList.add(child);
+                }
+                 //Adds the child with the lowest cost to the priority queue.
             }
             
         }

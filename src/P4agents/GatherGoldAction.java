@@ -24,7 +24,7 @@ public class GatherGoldAction implements StripsAction {
     
     public boolean preconditionsMet(GameState state) {
         Position peasPos = state.peasPos;
-        ResourceView view = state.woodNodes.get(resID);
+        ResourceView view = state.getResource(resID);
             double xd = Math.abs(peasPos.x - view.getXPosition());
             double yd = Math.abs(peasPos.y - view.getYPosition());
             return ((xd <= 1 && yd <= 1) && view.getAmountRemaining() >= 100);
