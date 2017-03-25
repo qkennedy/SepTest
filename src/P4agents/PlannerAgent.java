@@ -171,17 +171,8 @@ public class PlannerAgent extends Agent {
             System.exit(0);
         }
         
-        Stack<StripsAction> stackPath = new Stack<StripsAction>();
-        while(curr != startState) {
-            /**
-             *
-             * Implement code here that extracts the action from the state and converts it into
-             * a STRIPS action.
-             *
-             */
-        }
-        
-        return stackPath;
+        GameState winner = openList.peek();
+        return winner.actions;
     }
     
     /**
