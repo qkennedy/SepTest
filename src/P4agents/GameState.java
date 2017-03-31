@@ -274,9 +274,9 @@ public class GameState implements Comparable<GameState> {
     	double woodDist;
     	double carryCoeff;
     	if(units.get(peasID).getCargoAmount() != 0){
-    		carryCoeff = 0;
-    	} else {
     		carryCoeff = 1;
+    	} else {
+    		carryCoeff = 0;
     	}
     	double distSum = ((wdiff*distFromWood(peasID)) +(gdiff*distFromGold(peasID))) * (carryCoeff);
     	double distSum2 = (distFromTH(peasID)) * (1 - carryCoeff);
@@ -324,13 +324,13 @@ public class GameState implements Comparable<GameState> {
      */
     public double getCost() {
         // TODO: Implement me!
-    	return cost;
+    	return cost - heuristic();
     }
     public void updateCost(){
     	if(parent == null){
-    		cost = 0 - heuristic();
+    		cost = 0;
     	}
-        cost = parent.cost + 1 - heuristic();
+        cost = parent.cost + 1;
     }
     
     /**
@@ -416,12 +416,22 @@ public class GameState implements Comparable<GameState> {
         UnitView tmp = gatherToUnit(units.get(pID), type, 100);
         if(type.equals(ResourceType.GOLD)){
             ResourceView rView = gatherGoldNode(resID);
-            Nodes.remove(resID);
-            Nodes.add(resID, rView);
+            for(ResourceView view: Nodes){
+            	if(view.getID() == rView.getID()){
+            		Nodes.remove(view);
+            		break;
+            	}
+            }
+            Nodes.add(rView);
         } else {
             ResourceView rView = gatherWoodNode(resID);
-            Nodes.remove(resID);
-            Nodes.add(resID, rView);
+            for(ResourceView view: Nodes){
+            	if(view.getID() == rView.getID()){
+            		Nodes.remove(view);
+            		break;
+            	}
+            }
+            Nodes.add(rView);
         }
         units.remove(pID);
         units.add(pID, tmp);
