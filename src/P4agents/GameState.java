@@ -166,7 +166,7 @@ public class GameState implements Comparable<GameState> {
         
         if(depot.preconditionsMet(this)) {
             GameState child = new GameState(this);
-            depot.apply(child);
+            child = depot.apply(child);
             child.setParent(this);
             children.add(child);
             child.updateCost();
@@ -176,7 +176,7 @@ public class GameState implements Comparable<GameState> {
             
             if(woodAction.preconditionsMet(this)) {
                 GameState child = new GameState(this);
-                woodAction.apply(child);
+                child = woodAction.apply(child);
                 child.setParent(this);
                 children.add(child);
                 child.updateCost();
@@ -188,7 +188,7 @@ public class GameState implements Comparable<GameState> {
             
             if(goldAction.preconditionsMet(this)) {
                 GameState child = new GameState(this);
-                goldAction.apply(child);
+                child = goldAction.apply(child);
                 child.setParent(this);
                 children.add(child);
                 child.updateCost();
@@ -198,7 +198,7 @@ public class GameState implements Comparable<GameState> {
         for(MoveAction move : moves) {
             if(move.preconditionsMet(this)) {
                 GameState child = new GameState(this);
-                move.apply(child);
+                child = move.apply(child);
                 child.setParent(this);
                 children.add(child);
                 child.updateCost();
