@@ -11,31 +11,27 @@ public class MoveAction implements StripsAction {
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
 	private int uID;
-	private Direction direction;
-	private Position p;
-	public MoveAction(int uID, Direction direction) {
+	private Position newPos;
+	public MoveAction(int uID, Position newPos) {
 		this.uID = uID;
-		this.direction = direction;
+		this.newPos = newPos;
 	}
 	
 	@Override
 	public GameState apply(GameState state) {
-		if(p == null){
-			p = newPos(state);
-		}
-        GameState copy = state;
-        copy.moveUnit(state.units.get(uID),p.x, p.y);
+        GameState copy = new GameState(state);
+        copy.moveUnit(state.units.get(uID),newPos.x, newPos.y);
         copy.actions.add(this);
         //TODO
         return copy;
 	}
-
+//Maybe add A* here to see if the location is actually reachable
 	public boolean preconditionsMet(GameState state) {
-		Position pos = newPos(state);
+		Position pos = newPos;
 		if(!state.positionExists(pos.x, pos.y)){
 			return false;
 		}
-		for(ResourceView view: state.goldNodes){
+		for(ResourceView view: state.Nodes){
 			if(pos.x == view.getXPosition()&&pos.y == view.getYPosition()){
 				return false;
 			}
@@ -49,34 +45,12 @@ public class MoveAction implements StripsAction {
 	}
 
 	@Override
-	public Action ResultantAction(GameState state) {
-		if(p == null){
-			p = newPos(state);
-		}
-		return Action.createCompoundMove(uID, p.x, p.y);
-	}
-	public Position newPos(GameState state){
-		UnitView view = state.units.get(uID);
-		Position orig = new Position(view.getXPosition(), view.getYPosition());
-		switch(direction){
-		case NORTH:
-			return new Position(orig.x, orig.y - 1);
-		case NORTHEAST:
-			return new Position(orig.x +1, orig.y - 1);
-		case EAST:
-			return new Position(orig.x +1, orig.y);
-		case SOUTHEAST:
-			return new Position(orig.x + 1, orig.y + 1);
-		case SOUTH:
-			return new Position(orig.x, orig.y + 1);
-		case SOUTHWEST:
-			return new Position(orig.x -1, orig.y - 1);
-		case WEST:
-			return new Position(orig.x - 1, orig.y);
-		case NORTHWEST:
-			return new Position(orig.x - 1, orig.y - 1);
-		}
-		return null;
+	public Action ResultantAction() {
+		return Action.createCompoundMove(uID, newPos.x, newPos.y);
 	}
 
+	@Override
+	public int getPID() {
+		return uID;
+	}
 }

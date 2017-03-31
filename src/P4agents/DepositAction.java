@@ -38,7 +38,12 @@ public class DepositAction implements StripsAction {
     }
     
     @Override
-    public Action ResultantAction(GameState state) {
-        return Action.createCompoundDeposit(state.peasID, state.townhallID);
+    public Action ResultantAction() {
+        return Action.createCompoundDeposit(pID, thID);
     }
+	@Override
+	public int getPID() {
+		// TODO Auto-generated method stub
+		return pID;
+	}
 }

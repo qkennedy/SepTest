@@ -149,7 +149,7 @@ public class PlannerAgent extends Agent {
      * @return The plan or null if no plan is found.
      */
     private Stack<StripsAction> AstarSearch(GameState startState) {
-        
+    	List<GameState> closedList = new ArrayList<GameState>();
         PriorityQueue<GameState> openList = new PriorityQueue<GameState>();
         GameState curr = startState;
         openList.add(startState);
@@ -161,10 +161,20 @@ public class PlannerAgent extends Agent {
             
             if(currChildren.size() != 0) {
                 for(GameState child: currChildren){
-                	openList.add(child);
-                }
+                		boolean isCopy = false;
+                		for(GameState e: closedList){
+                			if(e.equals(child)){
+                				isCopy = true;
+                				break;
+                			}
+                		}
+                		if(!isCopy){
+                		openList.add(child);
+                		}
+                	}
                  //Adds the child with the lowest cost to the priority queue.
             }
+            closedList.add(curr);
             
         }
         

@@ -104,6 +104,39 @@ public class GameState implements Comparable<GameState> {
         this.woodNodes = state.getResourceNodes(Type.TREE);
         actions = new Stack();
     }
+    public GameState(GameState parent){
+    	 this.state = parent.state;
+         this.playerNum = parent.playerNum;
+         this.requiredGold = parent.requiredGold;
+         this.requiredWood = parent.requiredWood;
+         this.buildPeasants = parent.buildPeasants; //For this project, buildPeasants will always be false. It will be true in Project 5.
+         this.xExt = parent.state.getXExtent();
+         this.yExt = parent.state.getYExtent();
+         this.units = parent.state.getUnits(playerNum);
+         this.gold = parent.gold;
+         this.wood = parent.wood;
+         List<Direction> directionList = parent.directionList;
+         
+         this.directionList = directionList;
+         
+         for(int unitId : state.getUnitIds(playerNum)) {
+             Unit.UnitView unit = state.getUnit(unitId);
+             String unitType = unit.getTemplateView().getName().toLowerCase();
+             if (unitType.equals("peasant")) {
+                 this.peasID = unitId;
+                 this.peasPos = new Position(unit.getXPosition(), unit.getYPosition());
+             }
+             if (unitType.equals("townhall")) {
+                 this.townhallID = unitId;
+                 this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
+             }
+         }
+         this.Nodes = state.getAllResourceNodes();
+         this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
+         this.woodNodes = state.getResourceNodes(Type.TREE);
+         actions = parent.actions;
+         
+    }
     
     
     /**
@@ -131,7 +164,7 @@ public class GameState implements Comparable<GameState> {
         DepositAction depot = new DepositAction(peasID, townhallID);
         
         if(depot.preconditionsMet(this)) {
-            GameState child = this; 
+            GameState child = new GameState(this);
             depot.apply(child);
             child.setParent(this);
             children.add(child);
@@ -141,7 +174,7 @@ public class GameState implements Comparable<GameState> {
             GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
             
             if(woodAction.preconditionsMet(this)) {
-                GameState child = this;
+                GameState child = new GameState(this);
                 woodAction.apply(child);
                 child.setParent(this);
                 children.add(child);
@@ -153,19 +186,17 @@ public class GameState implements Comparable<GameState> {
             GatherGoldAction goldAction = new GatherGoldAction(peasID, goldSource.getID());
             
             if(goldAction.preconditionsMet(this)) {
-                GameState child = this;
+                GameState child = new GameState(this);
                 goldAction.apply(child);
                 child.setParent(this);
                 children.add(child);
                 child.updateCost();
             }
         }
-        
-        for(Direction direction : directionList) {
-            MoveAction move = new MoveAction(peasID, direction);
-            
+        List<MoveAction> moves = getPossibleMoves(peasID);
+        for(MoveAction move : moves) {
             if(move.preconditionsMet(this)) {
-                GameState child = this;
+                GameState child = new GameState(this);
                 move.apply(child);
                 child.setParent(this);
                 children.add(child);
@@ -208,7 +239,6 @@ public class GameState implements Comparable<GameState> {
         unit.setHP(unitView.getHP());
         unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
         unit.setCargo(type, amt);
-        
         return unit.getView();
     }
     
@@ -238,13 +268,52 @@ public class GameState implements Comparable<GameState> {
      */
     public double heuristic() {
     	//First, have a subtracted amount from the amount of each resource we have
-    	return gold + wood;
+    	double gdiff = 1 - (gold/requiredGold);
+    	double wdiff = 1 - (wood/requiredWood);
+    	double woodDist;
+    	double carryCoeff;
+    	if(units.get(peasID).getCargoAmount() != 0){
+    		carryCoeff = 0;
+    	} else {
+    		carryCoeff = 1;
+    	}
+    	double distSum = ((wdiff*distFromWood(peasID)) +(gdiff*distFromGold(peasID))) * (carryCoeff);
+    	double distSum2 = (distFromTH(peasID)) * (1 - carryCoeff);
+    	return gold + wood + carryCoeff*15;
     }
     public double distFromWood(int pID){
-    	
-    	return 0.0;
+    	double closest = 9999;
+    	for(ResourceView view: Nodes){
+            double xd = Math.abs(peasPos.x - view.getXPosition());
+            double yd = Math.abs(peasPos.y - view.getYPosition());
+            double dist = xd + yd / 2;
+           if((xd + yd / 2) < closest && view.getType().equals(Type.TREE) && view.getAmountRemaining() > 0){
+        	   closest = dist;
+           }
+    	}
+    	 return closest;
     }
     
+    public double distFromGold(int pID){
+    	double closest = 9999;
+    	for(ResourceView view: Nodes){
+            double xd = Math.abs(peasPos.x - view.getXPosition());
+            double yd = Math.abs(peasPos.y - view.getYPosition());
+            double dist = xd + yd / 2;
+            if((xd + yd / 2) < closest && view.getType().equals(Type.GOLD_MINE) && view.getAmountRemaining() > 0){
+        	   closest = dist;
+           }
+    	}
+    	 return closest;
+    }
+    public double distFromTH(int pID){
+    	double closest = 9999;
+    	UnitView view = units.get(townhallID);
+        double xd = Math.abs(peasPos.x - view.getXPosition());
+        double yd = Math.abs(peasPos.y - view.getYPosition());
+        Double dist = xd + yd / 2;
+    	return dist;
+    }
     /**
      *
      * Write the function that computes the current cost to get to this node. This is combined with your heuristic to
@@ -293,7 +362,11 @@ public class GameState implements Comparable<GameState> {
      */
     @Override
     public boolean equals(Object o) {
-        return (this.hashCode() == o.hashCode());
+    	GameState other = (GameState) o;
+        boolean res = this.gold == other.gold && this.wood == other.wood;
+        boolean carrying = this.units.get(peasID).getCargoAmount() == other.units.get(peasID).getCargoAmount();
+        boolean pos = this.peasPos.x == other.peasPos.x &&  this.peasPos.y == other.peasPos.y;
+        return res && pos && carrying;
     }
     
     /**
@@ -389,6 +462,7 @@ public class GameState implements Comparable<GameState> {
     }
     
     public void deposit(int uID, int thID){
+    	System.out.println("DEPOSITED SUCCESSFULLY");
         UnitView peasantview = units.get(uID);
         Unit.UnitView townhallview = state.getUnit(townhallID);
         if(peasantview.getCargoType().equals(ResourceType.GOLD)){
@@ -404,4 +478,52 @@ public class GameState implements Comparable<GameState> {
     public ResourceView getResource(int ID){
     	return state.getResourceNode(ID);
     }
+    public List<MoveAction> getPossibleMoves(int uid){
+    	List<MoveAction> list =  new ArrayList<MoveAction>();
+    	//First, add the positions surrounding townhall
+    	UnitView th = units.get(townhallID);
+    	Position thPos = new Position(th.getXPosition(), th.getYPosition());
+    	list.addAll(getSurrActions(thPos));
+    	//Next, add the positions next to all resource nodes which still contain resources
+    	for(ResourceView r: Nodes){
+    		if(r.getAmountRemaining()!= 0){
+    			Position rPos = new Position(r.getXPosition(),r.getYPosition());
+    			list.addAll(getSurrActions(rPos));
+    		}
+    	}
+    	return list;
+    }
+    
+    public List<MoveAction> getSurrActions(Position pos){
+    	List<MoveAction> list =  new ArrayList<MoveAction>();
+    	for(Direction d:  directionList){
+    		Position newPos = newPos(d, pos);
+           MoveAction move = new MoveAction(peasID, newPos);
+            if(move.preconditionsMet(this)) {
+            	list.add(move);
+            }
+    	}
+    	return list;
+    }
+    public Position newPos(Direction direction, Position orig){
+		switch(direction){
+		case NORTH:
+			return new Position(orig.x, orig.y - 1);
+		case NORTHEAST:
+			return new Position(orig.x +1, orig.y - 1);
+		case EAST:
+			return new Position(orig.x +1, orig.y);
+		case SOUTHEAST:
+			return new Position(orig.x + 1, orig.y + 1);
+		case SOUTH:
+			return new Position(orig.x, orig.y + 1);
+		case SOUTHWEST:
+			return new Position(orig.x -1, orig.y - 1);
+		case WEST:
+			return new Position(orig.x - 1, orig.y);
+		case NORTHWEST:
+			return new Position(orig.x - 1, orig.y - 1);
+		}
+		return null;
+	}
 }

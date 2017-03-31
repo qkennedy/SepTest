@@ -105,17 +105,21 @@ public class PEAgent extends Agent {
     	//implement this thoroughly.
     	
     	while(!plan.isEmpty()) {
-    	
     		if(stateView.getTurnNumber() != 0) {
     			Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
-    			for (ActionResult result : actionResults.values()) {
-
-    				if(result.getFeedback().equals(ActionFeedback.COMPLETED)) {	
+    			boolean complete = false;
+    			while(!complete){
+    				complete = true;
+    				for (ActionResult result : actionResults.values()) {
+    					if(!result.getFeedback().equals(ActionFeedback.COMPLETED)) {	
+    						complete = false;
+    					}
     				}
     			}
+    			
     		}
-    		
-    		
+    		StripsAction nextAction = plan.pop();
+    		actions.put(peasantIdMap.get(nextAction.getPID()),nextAction.ResultantAction());
     	}
         return actions;
     }
@@ -127,7 +131,7 @@ public class PEAgent extends Agent {
      */
     private Action createSepiaAction(StripsAction action) {
     	
-        return null;
+        return action.ResultantAction();
     }
 
     @Override

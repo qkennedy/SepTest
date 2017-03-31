@@ -22,6 +22,7 @@ public interface StripsAction {
      * @param state GameState to check if action is applicable
      * @return true if apply can be called, false otherwise
      */
+	public int getPID();
     public boolean preconditionsMet(GameState state);
 
     /**
@@ -37,5 +38,5 @@ public interface StripsAction {
      * @return State resulting from successful action appliction.
      */
     public GameState apply(GameState state);
-    public Action ResultantAction(GameState state);
+    public Action ResultantAction();
 }

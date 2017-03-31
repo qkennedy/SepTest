@@ -31,7 +31,11 @@ public class GatherGoldAction implements StripsAction {
     }
     
     @Override
-    public Action ResultantAction(GameState state) {
+    public Action ResultantAction() {
         return Action.createCompoundGather(pID, resID);
     }
+	@Override
+	public int getPID() {
+		return pID;
+	}
 }

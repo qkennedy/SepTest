@@ -30,8 +30,12 @@ public class GatherWoodAction implements StripsAction {
     }
     
     @Override
-    public Action ResultantAction(GameState state) {
-        return Action.createCompoundGather(state.peasID, resID);
+    public Action ResultantAction() {
+        return Action.createCompoundGather(pID, resID);
     }
+	@Override
+	public int getPID() {
+		return pID;
+	}
     
 }
