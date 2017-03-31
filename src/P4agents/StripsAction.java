@@ -38,5 +38,9 @@ public interface StripsAction {
      * @return State resulting from successful action appliction.
      */
     public GameState apply(GameState state);
+    
+    /**
+     *Returns the SEPIA Action version of the Strips Action
+     */
     public Action ResultantAction();
 }
