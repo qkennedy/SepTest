@@ -134,7 +134,8 @@ public class GameState implements Comparable<GameState> {
          this.Nodes = state.getAllResourceNodes();
          this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
          this.woodNodes = state.getResourceNodes(Type.TREE);
-         actions = parent.actions;
+         actions = new Stack();
+         actions.addAll(parent.actions);
          
     }
     
