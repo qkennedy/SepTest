@@ -20,19 +20,19 @@ public class DepositAction implements StripsAction {
 	}
     @Override
     public boolean preconditionsMet(GameState state) {
-        UnitView peas = state.units.get(state.peasID);
+
         Position peasPos = state.peasPos;
         Position thPos = state.thPos;
         double xd = Math.abs(peasPos.x - thPos.x);
         double yd = Math.abs(peasPos.y - thPos.y);
-        return((xd <= 1 && yd <= 1) && peas.getCargoAmount()>0);
+        return((xd <= 1 && yd <= 1) && state.pAmt>0);
     }
     
     @Override
     public GameState apply(GameState state) {
     	GameState copy = state;
         copy.deposit(pID, thID);
-        copy.actions.add(this);
+        copy.actions.push(this);
         //TODO Add Cost Changes
         return copy;
     }

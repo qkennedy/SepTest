@@ -83,62 +83,7 @@ public class PlannerAgent extends Agent {
     public void loadPlayerData(InputStream inputStream) {
         
     }
-    
-    
-    public List<GameState> sort(List<GameState> children) {
-        GameState[] unsortedChildren = new GameState[children.size()];
-        
-        for(int i = 0; i <= children.size() - 1; i++) {
-            unsortedChildren[i] = children.get(i);
-        }
-        
-        quickSort(unsortedChildren);
-        
-        List<GameState> sortedChildren = new ArrayList<GameState>();
-        
-        for(int i = 0; i <= unsortedChildren.length - 1; i++) {
-            sortedChildren.add(unsortedChildren[i]);
-        }
-        
-        return sortedChildren;
-    }
-    
-    
-    public void quickSort(GameState[] childList) {
-        childNodeQuickSort(childList, 0, childList.length - 1);
-    }
-    
-    public static void childNodeQuickSort(GameState[] childList, int first, int last) {
-        if(first >= last)
-            return;
-        int split = partition(childList, first, last);
-        childNodeQuickSort(childList, first, split);
-        childNodeQuickSort(childList, split+1, last);
-    }
-    
-    public static int partition(GameState[] childList, int first, int last) {
-        double pivot = childList[(first + last)/2].getCost();
-        int left = first - 1;
-        int right = last + 1;
-        while (true) {
-            do {
-                left++;
-            } while(childList[left].getCost() < pivot);
-            do {
-                right--;
-            } while(childList[right].getCost() > pivot);
-            
-            if(left < right) {
-                GameState child = childList[left];
-                childList[left] = childList[right];
-                childList[right] = child;
-            }
-            
-            else {
-                return right;
-            }
-        }
-    }
+
     
     /**
      * Perform an A* search of the game graph. This should return your plan as a stack of actions. This is essentially
@@ -183,8 +128,12 @@ public class PlannerAgent extends Agent {
             System.exit(0);
         }
         
+        Stack<StripsAction> stack = new Stack<StripsAction>();
         GameState winner = openList.peek();
-        return winner.actions;
+        while(!winner.actions.empty()){
+        	stack.push(winner.actions.pop());
+        }
+        return stack;
     }
     
     /**

@@ -41,14 +41,16 @@ public class GameState implements Comparable<GameState> {
     private int requiredWood;
     private int xExt;
     private int yExt;
-    private GameState parent;
+    public GameState parent;
     private double cost;
     private double hVal;
     public double gold;
     public double wood;
     public List<Unit.UnitView> units;
-    private boolean buildPeasants;
+    public boolean buildPeasants;
     public Position peasPos;
+    public ResourceType pCType;
+    public int pAmt;
     public int peasID;
     public int townhallID;
     public Position thPos;
@@ -68,7 +70,7 @@ public class GameState implements Comparable<GameState> {
      * @param buildPeasants True if the BuildPeasant action should be considered
      */
     public GameState(State.StateView state, int playernum, int requiredGold, int requiredWood, boolean buildPeasants) {
-
+    	
         this.state = state;
         this.playerNum = playernum;
         this.requiredGold = requiredGold;
@@ -124,16 +126,18 @@ public class GameState implements Comparable<GameState> {
              String unitType = unit.getTemplateView().getName().toLowerCase();
              if (unitType.equals("peasant")) {
                  this.peasID = unitId;
-                 this.peasPos = new Position(unit.getXPosition(), unit.getYPosition());
              }
              if (unitType.equals("townhall")) {
                  this.townhallID = unitId;
                  this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
              }
          }
-         this.Nodes = state.getAllResourceNodes();
-         this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
-         this.woodNodes = state.getResourceNodes(Type.TREE);
+         this.Nodes = parent.Nodes;
+         this.goldNodes = parent.goldNodes;
+         this.woodNodes = parent.woodNodes;
+         this.peasPos = parent.peasPos;
+         this.pCType = parent.pCType;
+         this.pAmt = parent.pAmt;
          actions = new Stack();
          actions.addAll(parent.actions);
          
@@ -148,7 +152,7 @@ public class GameState implements Comparable<GameState> {
      * @return true if the goal conditions are met in this instance of game state.
      */
     public boolean isGoal() {
-    	return (gold == requiredGold && wood == requiredWood );
+    	return (gold > requiredGold && wood > requiredWood );
     }
     
     /**
@@ -171,29 +175,26 @@ public class GameState implements Comparable<GameState> {
             children.add(child);
             child.updateCost();
         }
-        for(ResourceView woodSource : woodNodes) {
-            GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
-            
-            if(woodAction.preconditionsMet(this)) {
-                GameState child = new GameState(this);
-                child = woodAction.apply(child);
-                child.setParent(this);
-                children.add(child);
-                child.updateCost();
+            for(ResourceView woodSource : woodNodes) {
+                GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
+                
+                if(woodAction.preconditionsMet(this)) {
+                    GameState child = new GameState(this);
+                    child = woodAction.apply(child);
+                    children.add(child);
+                    child.updateCost();
+                }
             }
-        }
-        
-        for(ResourceView goldSource : goldNodes) {
-            GatherGoldAction goldAction = new GatherGoldAction(peasID, goldSource.getID());
-            
-            if(goldAction.preconditionsMet(this)) {
-                GameState child = new GameState(this);
-                child = goldAction.apply(child);
-                child.setParent(this);
-                children.add(child);
-                child.updateCost();
+            for(ResourceView goldSource : goldNodes) {
+                GatherGoldAction goldAction = new GatherGoldAction(peasID, goldSource.getID());
+                
+                if(goldAction.preconditionsMet(this)) {
+                    GameState child = new GameState(this);
+                    child = goldAction.apply(child);
+                    children.add(child);
+                    child.updateCost();
+                }
             }
-        }
         List<MoveAction> moves = getPossibleMoves(peasID);
         for(MoveAction move : moves) {
             if(move.preconditionsMet(this)) {
@@ -207,40 +208,6 @@ public class GameState implements Comparable<GameState> {
         }
         
         return children;
-    }
-    
-    
-    //Helper method that generates a Unit from a UnitView.
-    public UnitView MoveUnit(Unit.UnitView unitView, int x, int y) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(x);
-        unit.setyPosition(y);
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
-        
-        return unit.getView();
-    }
-    
-    public UnitView DepositToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(unitView.getXPosition());
-        unit.setyPosition(unitView.getYPosition());
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(type, amt);
-        peasPos = new Position(unit.getxPosition(),unit.getyPosition());
-        return unit.getView();
-    }
-    
-    public UnitView DepositFromUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(unitView.getXPosition());
-        unit.setyPosition(unitView.getYPosition());
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(type, amt);
-        return unit.getView();
     }
     
     //Helper method: Determines if a position on the map exists.
@@ -269,18 +236,22 @@ public class GameState implements Comparable<GameState> {
      */
     public double heuristic() {
     	//First, have a subtracted amount from the amount of each resource we have
-    	double gdiff = 1 - (gold/requiredGold);
-    	double wdiff = 1 - (wood/requiredWood);
+    	double gdiff = gold;
+    	double wdiff = wood;
+    	if(gdiff>requiredGold){
+    		gdiff = requiredGold;
+    	}
+    	if(wdiff>requiredWood){
+    		wdiff = requiredWood;
+    	}
     	double woodDist;
     	double carryCoeff;
-    	if(units.get(peasID).getCargoAmount() != 0){
+    	if(pAmt!=0){
     		carryCoeff = 1;
     	} else {
     		carryCoeff = 0;
     	}
-    	double distSum = ((wdiff*distFromWood(peasID)) +(gdiff*distFromGold(peasID))) * (carryCoeff);
-    	double distSum2 = (distFromTH(peasID)) * (1 - carryCoeff);
-    	return gold + wood + carryCoeff*15;
+    	return gdiff  + wdiff;
     }
     public double distFromWood(int pID){
     	double closest = 9999;
@@ -329,8 +300,9 @@ public class GameState implements Comparable<GameState> {
     public void updateCost(){
     	if(parent == null){
     		cost = 0;
-    	}
+    	} else {
         cost = parent.cost + 1;
+    	}
     }
     
     /**
@@ -365,7 +337,7 @@ public class GameState implements Comparable<GameState> {
     public boolean equals(Object o) {
     	GameState other = (GameState) o;
         boolean res = this.gold == other.gold && this.wood == other.wood;
-        boolean carrying = this.units.get(peasID).getCargoAmount() == other.units.get(peasID).getCargoAmount();
+        boolean carrying = this.pAmt== other.pAmt && this.pCType == other.pCType;
         boolean pos = this.peasPos.x == other.peasPos.x &&  this.peasPos.y == other.peasPos.y;
         return res && pos && carrying;
     }
@@ -413,7 +385,7 @@ public class GameState implements Comparable<GameState> {
     
 
     public void gatherFromNode(int pID, int resID, ResourceType type){
-        UnitView tmp = gatherToUnit(units.get(pID), type, 100);
+        gatherToUnit(units.get(pID), type, 100);
         if(type.equals(ResourceType.GOLD)){
             ResourceView rView = gatherGoldNode(resID);
             for(ResourceView view: Nodes){
@@ -433,8 +405,6 @@ public class GameState implements Comparable<GameState> {
             }
             Nodes.add(rView);
         }
-        units.remove(pID);
-        units.add(pID, tmp);
         
         
     }
@@ -442,24 +412,11 @@ public class GameState implements Comparable<GameState> {
     //Helper method that generates a Unit from a UnitView.
     public void moveUnit(Unit.UnitView unitView, int x, int y) {
     	peasPos = new Position(x,y);
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(x);
-        unit.setyPosition(y);
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(unitView.getCargoType(), unitView.getCargoAmount());
-        units.remove(unitView.getID());
-        units.add(unit.ID,unit.getView());
     }
-    public UnitView gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-        Unit unit = new Unit(new UnitTemplate(unitView.getID()), unitView.getID());
-        unit.setxPosition(unitView.getXPosition());
-        unit.setyPosition(unitView.getYPosition());
-        unit.setHP(unitView.getHP());
-        unit.setDurativeStatus(unitView.getCurrentDurativeAction(), unitView.getCurrentDurativeProgress());
-        unit.setCargo(type, amt);
+    public void gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
+    	pCType = type;
+    	pAmt = amt;
         
-        return unit.getView();
     }
     public ResourceView gatherWoodNode(int resID) {
         ResourceView prev = state.getResourceNode((resID));
@@ -474,15 +431,14 @@ public class GameState implements Comparable<GameState> {
     
     public void deposit(int uID, int thID){
     	System.out.println("DEPOSITED SUCCESSFULLY");
-        UnitView peasantview = units.get(uID);
-        Unit.UnitView townhallview = state.getUnit(townhallID);
-        if(peasantview.getCargoType().equals(ResourceType.GOLD)){
-        	gold += peasantview.getCargoAmount();
-        } else {
-        	wood += peasantview.getCargoAmount();
-        }
-        DepositToUnit(townhallview, peasantview.getCargoType(), peasantview.getCargoAmount());
-        DepositFromUnit(peasantview, peasantview.getCargoType(), 0);
+    	if(pCType == ResourceType.GOLD){
+    		gold += pAmt;
+    	} else {
+    		wood += pAmt;
+    	}
+    	pCType = null;
+    	pAmt = 0;
+    	
         
     }
     
@@ -537,4 +493,12 @@ public class GameState implements Comparable<GameState> {
 		}
 		return null;
 	}
+    public UnitView getUnit(int unitID){
+    	for(UnitView v: units){
+    		if(v.getID() == unitID){
+    			return v;
+    		}
+    	}
+    	return null;
+    }
 }

@@ -16,8 +16,7 @@ public class GatherWoodAction implements StripsAction {
     public GameState apply(GameState state) {
         GameState copy = state;
         copy.gatherFromNode(pID, resID, ResourceType.WOOD);
-        copy.actions.add(this);
-        //TODO
+        copy.actions.push(this);
         return copy;
     }
     
@@ -26,7 +25,8 @@ public class GatherWoodAction implements StripsAction {
         ResourceView view = state.getResource(resID);
             double xd = Math.abs(peasPos.x - view.getXPosition());
             double yd = Math.abs(peasPos.y - view.getYPosition());
-            return ((xd <= 1 && yd <= 1) && view.getAmountRemaining() >= 100);
+            boolean emptyHold = state.pAmt == 0;
+            return ((xd <= 1 && yd <= 1) && view.getAmountRemaining() >= 100) && emptyHold;
     }
     
     @Override

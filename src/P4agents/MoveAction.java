@@ -21,7 +21,7 @@ public class MoveAction implements StripsAction {
 	public GameState apply(GameState state) {
         GameState copy = new GameState(state);
         copy.moveUnit(state.units.get(uID),newPos.x, newPos.y);
-        copy.actions.add(this);
+        copy.actions.push(this);
         //TODO
         return copy;
 	}

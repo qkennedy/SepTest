@@ -98,30 +98,34 @@ public class PEAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-    	
-    	Map<Integer, Action> actions = new HashMap<Integer, Action>();
-    	
-    	//It appears as though classes implementing the StripsAction interface should be created prior to implementing this method. I will take time over break to 
-    	//implement this thoroughly.
-    	
-    	while(!plan.isEmpty()) {
-    		if(stateView.getTurnNumber() != 0) {
-    			Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
-    			boolean complete = false;
-    			while(!complete){
-    				complete = true;
-    				for (ActionResult result : actionResults.values()) {
-    					if(!result.getFeedback().equals(ActionFeedback.COMPLETED)) {	
-    						complete = false;
-    					}
-    				}
-    			}
-    			
-    		}
-    		StripsAction nextAction = plan.pop();
-    		actions.put(peasantIdMap.get(nextAction.getPID()),nextAction.ResultantAction());
+        // TODO: Implement me!
+    	if(plan == null) {
+    		System.out.println("Null plan in PEAgent!");
+    		return null;
     	}
-        return actions;
+    	
+    	if(plan.isEmpty()) {
+    		System.out.println("Empty plan in PEAgent!");
+    		return null;
+    	}
+    	
+    	Map<Integer, Action> output = new HashMap<Integer, Action>();
+    	
+    	if(stateView.getTurnNumber() != 0) {
+    		Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
+    	    for (ActionResult result : actionResults.values()) {
+    	    	if (result.getFeedback() == ActionFeedback.INCOMPLETE) {
+    	    		return output;
+    	    	}
+    	    	
+    	    }
+    	}
+    	
+    	StripsAction next = plan.pop();
+    	Action action = createSepiaAction(next);
+    	output.put(action.getUnitId(), action);
+    	
+        return output;
     }
 
     /**
