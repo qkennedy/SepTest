@@ -383,6 +383,37 @@ public class GameState implements Comparable<GameState> {
         units.add(uID, view);
     }
     
+    public int getCargoAmt() {
+        return state.getUnit(peasID).getCargoAmount();
+    }
+    
+    public int getUnitSize() {
+        return state.getAllUnitIds().size();
+    }
+    
+    public int getPeasantTemplateID() {
+        TemplateView peasantTemplate = state.getTemplate(playerNum, "Peasant");
+        int peasantTemplateID = peasantTemplate.getID();
+        
+        return peasantTemplateID;
+    }
+    
+    
+    public List<Integer> getIdleUnitIDs() {
+        List<Integer> idleIDs = new ArrayList<Integer>();
+        List<Integer> allIDs = state.getAllUnitIds();
+        
+        for(Integer unIDs : allIDs) {
+            Unit.UnitView unit = state.getUnit(unIDs);
+            String unitType = unit.getTemplateView().getName().toLowerCase();
+            if(unitType.equals("peasant") /*&& idle*/) { //idle condition to be implemented in P5, p2.
+                idleIDs.add(unIDs);
+            }
+        }
+        
+        return idleIDs;
+    }
+    
 
     public void gatherFromNode(int pID, int resID, ResourceType type){
         gatherToUnit(units.get(pID), type, 100);
