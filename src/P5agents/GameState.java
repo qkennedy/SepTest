@@ -44,7 +44,7 @@ public class GameState implements Comparable<GameState> {
     private int yExt;
     public GameState parent;
     private double cost;
-    private double hVal;
+    private double TCOST;
     public double gold;
     public double wood;
     public List<Unit.UnitView> units;
@@ -135,9 +135,24 @@ public class GameState implements Comparable<GameState> {
                  this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
              }
          }
-         this.Nodes = parent.Nodes;
-         this.goldNodes = parent.goldNodes;
-         this.woodNodes = parent.woodNodes;
+         Nodes = new ArrayList<ResourceView>();
+         woodNodes = new ArrayList<ResourceView>();
+         goldNodes = new ArrayList<ResourceView>();
+         for(ResourceView res: parent.Nodes){
+        	 if(res.getAmountRemaining()>0){
+        		 Nodes.add(res);
+        	 }
+         }
+         for(ResourceView res: parent.Nodes){
+        	 if(res.getType() == Type.TREE){
+        		 woodNodes.add(res);
+        	 }
+         }
+         for(ResourceView res: parent.Nodes){
+        	 if(res.getType() == Type.GOLD_MINE){
+        		 goldNodes.add(res);
+        	 }
+         }
          this.peasPos = parent.peasPos;
          this.pCType = parent.pCType;
          this.pAmt = parent.pAmt;
@@ -156,7 +171,7 @@ public class GameState implements Comparable<GameState> {
      * @return true if the goal conditions are met in this instance of game state.
      */
     public boolean isGoal() {
-    	return (gold > requiredGold && wood > requiredWood );
+    	return (gold >= requiredGold && wood >= requiredWood );
     }
     
     /**
@@ -242,12 +257,17 @@ public class GameState implements Comparable<GameState> {
     	//First, have a subtracted amount from the amount of each resource we have
     	double gdiff = gold;
     	double wdiff = wood;
-    	if(gdiff>requiredGold){
+    	double tdiff = 0;
+    	if(gold>requiredGold){
     		gdiff = requiredGold;
+    		tdiff = 1;
     	}
-    	if(wdiff>requiredWood){
+    	if(wood>requiredWood){
     		wdiff = requiredWood;
+    		tdiff = 1;
     	}
+    	
+    	
     	double woodDist;
     	double carryCoeff;
     	if(pAmt!=0){
@@ -255,7 +275,7 @@ public class GameState implements Comparable<GameState> {
     	} else {
     		carryCoeff = 0;
     	}
-    	return gdiff/10  + wdiff/10;
+    	return (gdiff/20  + wdiff/20) - tdiff;
     }
     public Position getClosestWood(int pID){
     	double closest = Double.MAX_VALUE;
@@ -302,6 +322,7 @@ public class GameState implements Comparable<GameState> {
      * @return The current cost to reach this goal
      */
     public double getCost() {
+    	TCOST = cost - heuristic();
     	return cost - heuristic();
     }
 
@@ -375,16 +396,6 @@ public class GameState implements Comparable<GameState> {
         return yExt;
     }
     
-    //These Methods should be stuff for changing the state to handle apply
-    public void deleteUnit(int uID){
-        units.remove(uID);
-    }
-    
-    public void addUnit(int uID, UnitView view){
-        units.add(uID, view);
-    }
-    
-
     public void gatherFromNode(int pID, int resID, ResourceType type){
         gatherToUnit(units.get(pID), type, 100);
         if(type.equals(ResourceType.GOLD)){
@@ -451,10 +462,10 @@ public class GameState implements Comparable<GameState> {
     	//First, add the positions surrounding townhall
     	UnitView th = units.get(townhallID);
     	Position thPos = new Position(th.getXPosition(), th.getYPosition());
-    	list.addAll(getSurrActions(thPos));
+    	list.add(getBestSurr(thPos));
     	//Next, add the positions next to all resource nodes which still contain resources
-    	list.addAll(getSurrActions(getClosestGM(uid)));
-    	list.addAll(getSurrActions(getClosestWood(uid)));
+    	list.add(getBestSurr(getClosestGM(uid)));
+    	list.add(getBestSurr(getClosestWood(uid)));
     	return list;
     }
     
@@ -468,6 +479,26 @@ public class GameState implements Comparable<GameState> {
             }
     	}
     	return list;
+    }
+    public MoveAction getBestSurr(Position pos){
+    	MoveAction best = null;
+    	double shortest = Double.MAX_VALUE;
+    	double dist = 0;
+    	for(Direction d:  directionList){
+    		Position newPos = newPos(d, pos);
+    		MoveAction move = new MoveAction(peasID, newPos);
+    		dist =  ChebDist(peasPos, pos);
+    		if(move.preconditionsMet(this)&& shortest > dist) {
+    			shortest = dist;
+    			best = move;
+    		}
+    	}
+    	return best;
+    }
+    public double ChebDist(Position start, Position end){
+    	double dx = Math.abs(start.x - end.x);
+    	double dy = Math.abs(start.y - end.y);
+    	return Math.max(dx, dy);
     }
     public Position newPos(Direction direction, Position orig){
 		switch(direction){
