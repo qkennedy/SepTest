@@ -1,4 +1,4 @@
-package P4agents;
+package P5agents;
 
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
@@ -106,6 +106,7 @@ public class GameState implements Comparable<GameState> {
         this.Nodes = state.getAllResourceNodes();
         this.goldNodes = state.getResourceNodes(Type.GOLD_MINE);
         this.woodNodes = state.getResourceNodes(Type.TREE);
+        this.cost = 0;
         actions = new Stack();
     }
     public GameState(GameState parent){
@@ -140,6 +141,7 @@ public class GameState implements Comparable<GameState> {
          this.peasPos = parent.peasPos;
          this.pCType = parent.pCType;
          this.pAmt = parent.pAmt;
+         cost = parent.cost;
          actions = new Stack();
          actions.addAll(parent.actions);
          
@@ -175,7 +177,7 @@ public class GameState implements Comparable<GameState> {
             child = depot.apply(child);
             child.setParent(this);
             children.add(child);
-            child.updateCost();
+            child.cost = cost + 1;
         }
             for(ResourceView woodSource : woodNodes) {
                 GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
@@ -184,7 +186,7 @@ public class GameState implements Comparable<GameState> {
                     GameState child = new GameState(this);
                     child = woodAction.apply(child);
                     children.add(child);
-                    child.updateCost();
+                    child.cost = cost + 1;
                 }
             }
             for(ResourceView goldSource : goldNodes) {
@@ -194,7 +196,7 @@ public class GameState implements Comparable<GameState> {
                     GameState child = new GameState(this);
                     child = goldAction.apply(child);
                     children.add(child);
-                    child.updateCost();
+                    child.cost = cost + 1;
                 }
             }
         List<MoveAction> moves = getPossibleMoves(peasID);
@@ -204,7 +206,7 @@ public class GameState implements Comparable<GameState> {
                 child = move.apply(child);
                 child.setParent(this);
                 children.add(child);
-                child.updateCost();
+                child.cost = cost + 1;
             }
             
         }
@@ -253,32 +255,36 @@ public class GameState implements Comparable<GameState> {
     	} else {
     		carryCoeff = 0;
     	}
-    	return gdiff  + wdiff;
+    	return gdiff/10  + wdiff/10;
     }
-    public double distFromWood(int pID){
+    public Position getClosestWood(int pID){
     	double closest = Double.MAX_VALUE;
+    	Position pos = null;
     	for(ResourceView view: Nodes){
             double xd = Math.abs(peasPos.x - view.getXPosition());
             double yd = Math.abs(peasPos.y - view.getYPosition());
             double dist = xd + yd / 2;
            if((xd + yd / 2) < closest && view.getType().equals(Type.TREE) && view.getAmountRemaining() > 0){
         	   closest = dist;
+        	   pos = new Position(view.getXPosition(),view.getYPosition());
            }
     	}
-    	 return closest;
+    	 return pos;
     }
     
-    public double distFromGold(int pID){
+    public Position getClosestGM(int pID){
     	double closest = Double.MAX_VALUE;
+    	Position pos = null;
     	for(ResourceView view: Nodes){
             double xd = Math.abs(peasPos.x - view.getXPosition());
             double yd = Math.abs(peasPos.y - view.getYPosition());
             double dist = xd + yd / 2;
             if((xd + yd / 2) < closest && view.getType().equals(Type.GOLD_MINE) && view.getAmountRemaining() > 0){
         	   closest = dist;
+        	   pos = new Position(view.getXPosition(),view.getYPosition());
            }
     	}
-    	 return closest;
+    	 return pos;
     }
     public double distFromTH(int pID){
     	double closest = 9999;
@@ -296,16 +302,9 @@ public class GameState implements Comparable<GameState> {
      * @return The current cost to reach this goal
      */
     public double getCost() {
-        // TODO: Implement me!
     	return cost - heuristic();
     }
-    public void updateCost(){
-    	if(parent == null){
-    		cost = 0;
-    	} else {
-        cost = parent.cost + 1;
-    	}
-    }
+
     
     /**
      * This is necessary to use your state in the Java priority queue. See the official priority queue and Comparable
@@ -454,12 +453,8 @@ public class GameState implements Comparable<GameState> {
     	Position thPos = new Position(th.getXPosition(), th.getYPosition());
     	list.addAll(getSurrActions(thPos));
     	//Next, add the positions next to all resource nodes which still contain resources
-    	for(ResourceView r: Nodes){
-    		if(r.getAmountRemaining()!= 0){
-    			Position rPos = new Position(r.getXPosition(),r.getYPosition());
-    			list.addAll(getSurrActions(rPos));
-    		}
-    	}
+    	list.addAll(getSurrActions(getClosestGM(uid)));
+    	list.addAll(getSurrActions(getClosestWood(uid)));
     	return list;
     }
     

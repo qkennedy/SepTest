@@ -98,24 +98,23 @@ public class PEAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-        // TODO: Implement me!
     	if(plan == null) {
-    		System.out.println("Null plan in PEAgent!");
+    		System.out.println("Error: Plan Null");
     		return null;
     	}
     	
     	if(plan.isEmpty()) {
-    		System.out.println("Empty plan in PEAgent!");
+    		System.out.println("Error: Plan Empty");
     		return null;
     	}
     	
-    	Map<Integer, Action> output = new HashMap<Integer, Action>();
+    	Map<Integer, Action> out = new HashMap<Integer, Action>();
     	
     	if(stateView.getTurnNumber() != 0) {
     		Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
-    	    for (ActionResult result : actionResults.values()) {
-    	    	if (result.getFeedback() == ActionFeedback.INCOMPLETE) {
-    	    		return output;
+    	    for (ActionResult res : actionResults.values()) {
+    	    	if (res.getFeedback() == ActionFeedback.INCOMPLETE) {
+    	    		return out;
     	    	}
     	    	
     	    }
@@ -123,9 +122,9 @@ public class PEAgent extends Agent {
     	
     	StripsAction next = plan.pop();
     	Action action = createSepiaAction(next);
-    	output.put(action.getUnitId(), action);
+    	out.put(action.getUnitId(), action);
     	
-        return output;
+        return out;
     }
 
     /**
