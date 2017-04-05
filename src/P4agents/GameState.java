@@ -6,6 +6,7 @@ import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.State.StateBuilder;
+import edu.cwru.sepia.environment.model.state.Template.TemplateView;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.environment.model.state.UnitTemplate;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
@@ -383,6 +384,37 @@ public class GameState implements Comparable<GameState> {
     
     public void addUnit(int uID, UnitView view){
         units.add(uID, view);
+    }
+    
+    public int getCargoAmt() {
+        return state.getUnit(peasID).getCargoAmount();
+    }
+    
+    public int getUnitSize() {
+        return state.getAllUnitIds().size();
+    }
+    
+    public int getPeasantTemplateID() {
+        TemplateView peasantTemplate = state.getTemplate(playerNum, "Peasant");
+        int peasantTemplateID = peasantTemplate.getID();
+        
+        return peasantTemplateID;
+    }
+    
+    
+    public List<Integer> getIdleUnitIDs() {
+        List<Integer> idleIDs = new ArrayList<Integer>();
+        List<Integer> allIDs = state.getAllUnitIds();
+        
+        for(Integer unIDs : allIDs) {
+            Unit.UnitView unit = state.getUnit(unIDs);
+            String unitType = unit.getTemplateView().getName().toLowerCase();
+            if(unitType.equals("peasant") /*&& idle*/) { //idle condition to be implemented in P5, p2.
+                idleIDs.add(unIDs);
+            }
+        }
+        
+        return idleIDs;
     }
     
 
