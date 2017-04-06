@@ -14,6 +14,7 @@ import edu.cwru.sepia.util.Direction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -72,7 +73,7 @@ public class GameState implements Comparable<GameState> {
      * @param buildPeasants True if the BuildPeasant action should be considered
      */
     public GameState(State.StateView state, int playernum, int requiredGold, int requiredWood, boolean buildPeasants) {
-    	
+        
         this.state = state;
         this.playerNum = playernum;
         this.requiredGold = requiredGold;
@@ -95,8 +96,8 @@ public class GameState implements Comparable<GameState> {
             Unit.UnitView unit = state.getUnit(unitId);
             String unitType = unit.getTemplateView().getName().toLowerCase();
             if (unitType.equals("peasant")) {
-                this.peasID = unitId;
-                this.peasPos = new Position(unit.getXPosition(), unit.getYPosition());
+                myPeasant peas = new myPeasant(unitId);
+                peasants.put(unitId, peas);
             }
             if (unitType.equals("townhall")) {
                 this.townhallID = unitId;
@@ -110,56 +111,56 @@ public class GameState implements Comparable<GameState> {
         actions = new Stack();
     }
     public GameState(GameState parent){
-    	 this.state = parent.state;
-         this.playerNum = parent.playerNum;
-         this.requiredGold = parent.requiredGold;
-         this.requiredWood = parent.requiredWood;
-         this.buildPeasants = parent.buildPeasants; //For this project, buildPeasants will always be false. It will be true in Project 5.
-         this.xExt = parent.state.getXExtent();
-         this.yExt = parent.state.getYExtent();
-         this.units = parent.state.getUnits(playerNum);
-         this.gold = parent.gold;
-         this.wood = parent.wood;
-         List<Direction> directionList = parent.directionList;
-         
-         this.directionList = directionList;
-         
-         for(int unitId : state.getUnitIds(playerNum)) {
-             Unit.UnitView unit = state.getUnit(unitId);
-             String unitType = unit.getTemplateView().getName().toLowerCase();
-             if (unitType.equals("peasant")) {
-                 this.peasID = unitId;
-             }
-             if (unitType.equals("townhall")) {
-                 this.townhallID = unitId;
-                 this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
-             }
-         }
-         Nodes = new ArrayList<ResourceView>();
-         woodNodes = new ArrayList<ResourceView>();
-         goldNodes = new ArrayList<ResourceView>();
-         for(ResourceView res: parent.Nodes){
-        	 if(res.getAmountRemaining()>0){
-        		 Nodes.add(res);
-        	 }
-         }
-         for(ResourceView res: parent.Nodes){
-        	 if(res.getType() == Type.TREE){
-        		 woodNodes.add(res);
-        	 }
-         }
-         for(ResourceView res: parent.Nodes){
-        	 if(res.getType() == Type.GOLD_MINE){
-        		 goldNodes.add(res);
-        	 }
-         }
-         this.peasPos = parent.peasPos;
-         this.pCType = parent.pCType;
-         this.pAmt = parent.pAmt;
-         cost = parent.cost;
-         actions = new Stack();
-         actions.addAll(parent.actions);
-         
+        this.state = parent.state;
+        this.playerNum = parent.playerNum;
+        this.requiredGold = parent.requiredGold;
+        this.requiredWood = parent.requiredWood;
+        this.buildPeasants = parent.buildPeasants; //For this project, buildPeasants will always be false. It will be true in Project 5.
+        this.xExt = parent.state.getXExtent();
+        this.yExt = parent.state.getYExtent();
+        this.units = parent.state.getUnits(playerNum);
+        this.gold = parent.gold;
+        this.wood = parent.wood;
+        List<Direction> directionList = parent.directionList;
+        
+        this.directionList = directionList;
+        
+        for(int unitId : state.getUnitIds(playerNum)) {
+            Unit.UnitView unit = state.getUnit(unitId);
+            String unitType = unit.getTemplateView().getName().toLowerCase();
+            if (unitType.equals("peasant")) {
+                this.peasID = unitId;
+            }
+            if (unitType.equals("townhall")) {
+                this.townhallID = unitId;
+                this.thPos = new Position(unit.getXPosition(), unit.getYPosition());
+            }
+        }
+        Nodes = new ArrayList<ResourceView>();
+        woodNodes = new ArrayList<ResourceView>();
+        goldNodes = new ArrayList<ResourceView>();
+        for(ResourceView res: parent.Nodes){
+            if(res.getAmountRemaining()>0){
+                Nodes.add(res);
+            }
+        }
+        for(ResourceView res: parent.Nodes){
+            if(res.getType() == Type.TREE){
+                woodNodes.add(res);
+            }
+        }
+        for(ResourceView res: parent.Nodes){
+            if(res.getType() == Type.GOLD_MINE){
+                goldNodes.add(res);
+            }
+        }
+        this.peasPos = parent.peasPos;
+        this.pCType = parent.pCType;
+        this.pAmt = parent.pAmt;
+        cost = parent.cost;
+        actions = new Stack();
+        actions.addAll(parent.actions);
+        
     }
     
     
@@ -171,7 +172,7 @@ public class GameState implements Comparable<GameState> {
      * @return true if the goal conditions are met in this instance of game state.
      */
     public boolean isGoal() {
-    	return (gold >= requiredGold && wood >= requiredWood );
+        return (gold >= requiredGold && wood >= requiredWood );
     }
     
     /**
@@ -184,18 +185,23 @@ public class GameState implements Comparable<GameState> {
         
         List<GameState> children = new ArrayList<GameState>();
         
-        
-        DepositAction depot = new DepositAction(peasID, townhallID);
-        
-        if(depot.preconditionsMet(this)) {
-            GameState child = new GameState(this);
-            child = depot.apply(child);
-            child.setParent(this);
-            children.add(child);
-            child.cost = cost + 1;
-        }
+        for (Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
+            
+            myPeasant peas = entry.getValue();
+            int ID = peas.getID();
+            
+            
+            DepositAction depot = new DepositAction(ID, townhallID);
+            
+            if(depot.preconditionsMet(this)) {
+                GameState child = new GameState(this);
+                child = depot.apply(child);
+                child.setParent(this);
+                children.add(child);
+                child.cost = cost + 1;
+            }
             for(ResourceView woodSource : woodNodes) {
-                GatherWoodAction woodAction = new GatherWoodAction(peasID, woodSource.getID());
+                GatherWoodAction woodAction = new GatherWoodAction(ID, woodSource.getID());
                 
                 if(woodAction.preconditionsMet(this)) {
                     GameState child = new GameState(this);
@@ -205,7 +211,7 @@ public class GameState implements Comparable<GameState> {
                 }
             }
             for(ResourceView goldSource : goldNodes) {
-                GatherGoldAction goldAction = new GatherGoldAction(peasID, goldSource.getID());
+                GatherGoldAction goldAction = new GatherGoldAction(ID, goldSource.getID());
                 
                 if(goldAction.preconditionsMet(this)) {
                     GameState child = new GameState(this);
@@ -214,16 +220,17 @@ public class GameState implements Comparable<GameState> {
                     child.cost = cost + 1;
                 }
             }
-        List<MoveAction> moves = getPossibleMoves(peasID);
-        for(MoveAction move : moves) {
-            if(move.preconditionsMet(this)) {
-                GameState child = new GameState(this);
-                child = move.apply(child);
-                child.setParent(this);
-                children.add(child);
-                child.cost = cost + 1;
+            List<MoveAction> moves = getPossibleMoves(ID);
+            for(MoveAction move : moves) {
+                if(move.preconditionsMet(this)) {
+                    GameState child = new GameState(this);
+                    child = move.apply(child);
+                    child.setParent(this);
+                    children.add(child);
+                    child.cost = cost + 1;
+                }
+                
             }
-            
         }
         
         return children;
@@ -254,65 +261,75 @@ public class GameState implements Comparable<GameState> {
      * @return The value estimated remaining cost to reach a goal state from this state.
      */
     public double heuristic() {
-    	//First, have a subtracted amount from the amount of each resource we have
-    	double gdiff = gold;
-    	double wdiff = wood;
-    	double tdiff = 0;
-    	if(gold>requiredGold){
-    		gdiff = requiredGold;
-    		tdiff = 1;
-    	}
-    	if(wood>requiredWood){
-    		wdiff = requiredWood;
-    		tdiff = 1;
-    	}
-    	
-    	
-    	double woodDist;
-    	double carryCoeff;
-    	if(pAmt!=0){
-    		carryCoeff = 1;
-    	} else {
-    		carryCoeff = 0;
-    	}
-    	return (gdiff/20  + wdiff/20) - tdiff;
+        //First, have a subtracted amount from the amount of each resource we have
+        double gdiff = gold;
+        double wdiff = wood;
+        double tdiff = 0;
+        if(gold>requiredGold){
+            gdiff = requiredGold;
+            tdiff = 1;
+        }
+        if(wood>requiredWood){
+            wdiff = requiredWood;
+            tdiff = 1;
+        }
+        
+        
+        double woodDist;
+        double carryCoeff;
+        if(pAmt!=0){
+            carryCoeff = 1;
+        } else {
+            carryCoeff = 0;
+        }
+        return (gdiff/20  + wdiff/20) - tdiff;
     }
     public Position getClosestWood(int pID){
-    	double closest = Double.MAX_VALUE;
-    	Position pos = null;
-    	for(ResourceView view: Nodes){
-            double xd = Math.abs(peasPos.x - view.getXPosition());
-            double yd = Math.abs(peasPos.y - view.getYPosition());
+        double closest = Double.MAX_VALUE;
+        
+        myPeasant peasant = peasants.get(pID);
+        Position peasantPos = peasant.getPos();
+        Position pos = null;
+        for(ResourceView view: Nodes){
+            
+            double xd = Math.abs(peasantPos.x - view.getXPosition());
+            double yd = Math.abs(peasantPos.y - view.getYPosition());
             double dist = xd + yd / 2;
-           if((xd + yd / 2) < closest && view.getType().equals(Type.TREE) && view.getAmountRemaining() > 0){
-        	   closest = dist;
-        	   pos = new Position(view.getXPosition(),view.getYPosition());
-           }
-    	}
-    	 return pos;
+            
+            if((xd + yd / 2) < closest && view.getType().equals(Type.TREE) && view.getAmountRemaining() > 0){
+                closest = dist;
+                pos = new Position(view.getXPosition(),view.getYPosition());
+            }
+        }
+        return pos;
     }
     
     public Position getClosestGM(int pID){
-    	double closest = Double.MAX_VALUE;
-    	Position pos = null;
-    	for(ResourceView view: Nodes){
-            double xd = Math.abs(peasPos.x - view.getXPosition());
-            double yd = Math.abs(peasPos.y - view.getYPosition());
+        double closest = Double.MAX_VALUE;
+        myPeasant peasant = peasants.get(pID);
+        Position peasantPos = peasant.getPos();
+        
+        Position pos = null;
+        for(ResourceView view: Nodes){
+            double xd = Math.abs(peasantPos.x - view.getXPosition());
+            double yd = Math.abs(peasantPos.y - view.getYPosition());
             double dist = xd + yd / 2;
             if((xd + yd / 2) < closest && view.getType().equals(Type.GOLD_MINE) && view.getAmountRemaining() > 0){
-        	   closest = dist;
-        	   pos = new Position(view.getXPosition(),view.getYPosition());
-           }
-    	}
-    	 return pos;
+                closest = dist;
+                pos = new Position(view.getXPosition(),view.getYPosition());
+            }
+        }
+        return pos;
     }
     public double distFromTH(int pID){
-    	double closest = 9999;
-    	UnitView view = units.get(townhallID);
-        double xd = Math.abs(peasPos.x - view.getXPosition());
-        double yd = Math.abs(peasPos.y - view.getYPosition());
+        double closest = 9999;
+        myPeasant peasant = peasants.get(pID);
+        Position peasantPos = peasant.getPos();
+        UnitView view = units.get(townhallID);
+        double xd = Math.abs(peasantPos.x - view.getXPosition());
+        double yd = Math.abs(peasantPos.y - view.getYPosition());
         Double dist = xd + yd / 2;
-    	return dist;
+        return dist;
     }
     /**
      *
@@ -322,10 +339,10 @@ public class GameState implements Comparable<GameState> {
      * @return The current cost to reach this goal
      */
     public double getCost() {
-    	TCOST = cost - heuristic();
-    	return cost - heuristic();
+        TCOST = cost - heuristic();
+        return cost - heuristic();
     }
-
+    
     
     /**
      * This is necessary to use your state in the Java priority queue. See the official priority queue and Comparable
@@ -357,10 +374,36 @@ public class GameState implements Comparable<GameState> {
      */
     @Override
     public boolean equals(Object o) {
-    	GameState other = (GameState) o;
+        GameState other = (GameState) o;
         boolean res = this.gold == other.gold && this.wood == other.wood;
-        boolean carrying = this.pAmt== other.pAmt && this.pCType == other.pCType;
-        boolean pos = this.peasPos.x == other.peasPos.x &&  this.peasPos.y == other.peasPos.y;
+        
+        boolean pos = true;
+        boolean carrying = true;
+        
+        if(peasants.size() == other.peasants.size()) {
+            
+            for(Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
+                for(Map.Entry<Integer, myPeasant> otherEntry : other.peasants.entrySet()) {
+                    myPeasant peas = entry.getValue();
+                    myPeasant otherPeas = otherEntry.getValue();
+                    
+                    if(peas.getID() == otherPeas.getID()) {
+                        
+                        if(peas.getCAmt() != otherPeas.getCAmt() || peas.getRType() != otherPeas.getRType()) {
+                            carrying = false;
+                            break;
+                        }
+                        
+                        if(peas.getPos().x != otherPeas.getPos().x || peas.getPos().y != otherPeas.getPos().y) {
+                            pos = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+        }
+        
         return res && pos && carrying;
     }
     
@@ -401,19 +444,19 @@ public class GameState implements Comparable<GameState> {
         if(type.equals(ResourceType.GOLD)){
             ResourceView rView = gatherGoldNode(resID);
             for(ResourceView view: Nodes){
-            	if(view.getID() == rView.getID()){
-            		Nodes.remove(view);
-            		break;
-            	}
+                if(view.getID() == rView.getID()){
+                    Nodes.remove(view);
+                    break;
+                }
             }
             Nodes.add(rView);
         } else {
             ResourceView rView = gatherWoodNode(resID);
             for(ResourceView view: Nodes){
-            	if(view.getID() == rView.getID()){
-            		Nodes.remove(view);
-            		break;
-            	}
+                if(view.getID() == rView.getID()){
+                    Nodes.remove(view);
+                    break;
+                }
             }
             Nodes.add(rView);
         }
@@ -423,11 +466,13 @@ public class GameState implements Comparable<GameState> {
     
     //Helper method that generates a Unit from a UnitView.
     public void moveUnit(Unit.UnitView unitView, int x, int y) {
-    	peasPos = new Position(x,y);
+        myPeasant peasant = peasants.get(unitView.getID());
+        peasant.setPos(new Position(x,y));
     }
     public void gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-    	pCType = type;
-    	pAmt = amt;
+        myPeasant peasant = peasants.get(unitView.getID());
+        peasant.setRType(type);
+        peasant.setCAmt(amt);
         
     }
     public ResourceView gatherWoodNode(int resID) {
@@ -442,91 +487,92 @@ public class GameState implements Comparable<GameState> {
     }
     
     public void deposit(int uID, int thID){
-    	System.out.println("DEPOSITED SUCCESSFULLY");
-    	if(pCType == ResourceType.GOLD){
-    		gold += pAmt;
-    	} else {
-    		wood += pAmt;
-    	}
-    	pCType = null;
-    	pAmt = 0;
-    	
+        System.out.println("DEPOSITED SUCCESSFULLY");
+        myPeasant depPeas = peasants.get(uID);
         
+        if(depPeas.getRType() == ResourceType.GOLD) {
+            gold += depPeas.getCAmt();
+        } else {
+            wood += depPeas.getCAmt();
+        }
+        
+        depPeas.setRType(null);
+        depPeas.setCAmt(0);
     }
     
     public ResourceView getResource(int ID){
-    	return state.getResourceNode(ID);
+        return state.getResourceNode(ID);
     }
     public List<MoveAction> getPossibleMoves(int uid){
-    	List<MoveAction> list =  new ArrayList<MoveAction>();
-    	//First, add the positions surrounding townhall
-    	UnitView th = units.get(townhallID);
-    	Position thPos = new Position(th.getXPosition(), th.getYPosition());
-    	list.add(getBestSurr(thPos));
-    	//Next, add the positions next to all resource nodes which still contain resources
-    	list.add(getBestSurr(getClosestGM(uid)));
-    	list.add(getBestSurr(getClosestWood(uid)));
-    	return list;
+        List<MoveAction> list =  new ArrayList<MoveAction>();
+        //First, add the positions surrounding townhall
+        UnitView th = units.get(townhallID);
+        Position thPos = new Position(th.getXPosition(), th.getYPosition());
+        list.add(getBestSurr(thPos));
+        //Next, add the positions next to all resource nodes which still contain resources
+        list.add(getBestSurr(getClosestGM(uid)));
+        list.add(getBestSurr(getClosestWood(uid)));
+        return list;
     }
     
     public List<MoveAction> getSurrActions(Position pos){
-    	List<MoveAction> list =  new ArrayList<MoveAction>();
-    	for(Direction d:  directionList){
-    		Position newPos = newPos(d, pos);
-           MoveAction move = new MoveAction(peasID, newPos);
+        List<MoveAction> list =  new ArrayList<MoveAction>();
+        for(Direction d:  directionList){
+            Position newPos = newPos(d, pos);
+            MoveAction move = new MoveAction(peasID, newPos);
             if(move.preconditionsMet(this)) {
-            	list.add(move);
+                list.add(move);
             }
-    	}
-    	return list;
+        }
+        return list;
     }
     public MoveAction getBestSurr(Position pos){
-    	MoveAction best = null;
-    	double shortest = Double.MAX_VALUE;
-    	double dist = 0;
-    	for(Direction d:  directionList){
-    		Position newPos = newPos(d, pos);
-    		MoveAction move = new MoveAction(peasID, newPos);
-    		dist =  ChebDist(peasPos, pos);
-    		if(move.preconditionsMet(this)&& shortest > dist) {
-    			shortest = dist;
-    			best = move;
-    		}
-    	}
-    	return best;
+        MoveAction best = null;
+        double shortest = Double.MAX_VALUE;
+        double dist = 0;
+        for(Direction d:  directionList){
+            Position newPos = newPos(d, pos);
+            MoveAction move = new MoveAction(peasID, newPos);
+            dist =  ChebDist(peasPos, pos);
+            if(move.preconditionsMet(this)&& shortest > dist) {
+                shortest = dist;
+                best = move;
+            }
+        }
+        return best;
     }
     public double ChebDist(Position start, Position end){
-    	double dx = Math.abs(start.x - end.x);
-    	double dy = Math.abs(start.y - end.y);
-    	return Math.max(dx, dy);
+        double dx = Math.abs(start.x - end.x);
+        double dy = Math.abs(start.y - end.y);
+        return Math.max(dx, dy);
     }
     public Position newPos(Direction direction, Position orig){
-		switch(direction){
-		case NORTH:
-			return new Position(orig.x, orig.y - 1);
-		case NORTHEAST:
-			return new Position(orig.x +1, orig.y - 1);
-		case EAST:
-			return new Position(orig.x +1, orig.y);
-		case SOUTHEAST:
-			return new Position(orig.x + 1, orig.y + 1);
-		case SOUTH:
-			return new Position(orig.x, orig.y + 1);
-		case SOUTHWEST:
-			return new Position(orig.x -1, orig.y - 1);
-		case WEST:
-			return new Position(orig.x - 1, orig.y);
-		case NORTHWEST:
-			return new Position(orig.x - 1, orig.y - 1);
-		}
-		return null;
-	}
+        switch(direction){
+            case NORTH:
+                return new Position(orig.x, orig.y - 1);
+            case NORTHEAST:
+                return new Position(orig.x +1, orig.y - 1);
+            case EAST:
+                return new Position(orig.x +1, orig.y);
+            case SOUTHEAST:
+                return new Position(orig.x + 1, orig.y + 1);
+            case SOUTH:
+                return new Position(orig.x, orig.y + 1);
+            case SOUTHWEST:
+                return new Position(orig.x -1, orig.y - 1);
+            case WEST:
+                return new Position(orig.x - 1, orig.y);
+            case NORTHWEST:
+                return new Position(orig.x - 1, orig.y - 1);
+        }
+        return null;
+    }
     public UnitView getUnit(int unitID){
-    	for(UnitView v: units){
-    		if(v.getID() == unitID){
-    			return v;
-    		}
-    	}
-    	return null;
+        for(UnitView v: units){
+            if(v.getID() == unitID){
+                return v;
+            }
+        }
+        return null;
     }
 }
