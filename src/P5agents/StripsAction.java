@@ -1,6 +1,9 @@
 package P5agents; //Modified this package.
 
 import edu.cwru.sepia.action.Action;
+
+import java.util.List;
+
 import P5agents.GameState;
 
 /**
@@ -22,9 +25,8 @@ public interface StripsAction {
      * @param state GameState to check if action is applicable
      * @return true if apply can be called, false otherwise
      */
-	public int getPID();
     public boolean preconditionsMet(GameState state);
-
+    
     /**
      * Applies the action instance to the given GameState producing a new GameState in the process.
      *
@@ -42,5 +44,5 @@ public interface StripsAction {
     /**
      *Returns the SEPIA Action version of the Strips Action
      */
-    public Action ResultantAction();
+    public List<Action> ResultantAction();
 }
