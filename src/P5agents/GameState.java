@@ -84,7 +84,6 @@ public class GameState implements Comparable<GameState> {
         this.yExt = state.getYExtent();
         this.units = state.getUnits(playernum);
         
-        
         Direction[] directions = {Direction.EAST, Direction.NORTH, Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTH, Direction.SOUTHEAST, Direction.SOUTHWEST, Direction.WEST};
         List<Direction> directionList = new ArrayList<Direction>();
         for(int i = 0; i <= directions.length - 1; i++) {
@@ -155,9 +154,8 @@ public class GameState implements Comparable<GameState> {
                 goldNodes.add(res);
             }
         }
-        this.peasPos = parent.peasPos;
-        this.pCType = parent.pCType;
-        this.pAmt = parent.pAmt;
+        this.peasants = new HashMap<Integer, myPeasant>();
+        peasants.putAll(parent.peasants);
         cost = parent.cost;
         actions = new Stack();
         actions.addAll(parent.actions);
@@ -241,7 +239,7 @@ public class GameState implements Comparable<GameState> {
     public boolean positionExists(int x, int y) {
         return (x >= 0 && y >= 0 && x <= xExt && y <= yExt);
     }
-    public boolean positionFree(int x, int y) {
+    public boolean positionFree(int x, int y, ArrayList<Position> taken) {
         boolean filled = false;
         Collection<myPeasant> ps = peasants.values();
         for(myPeasant p: ps){
@@ -251,6 +249,11 @@ public class GameState implements Comparable<GameState> {
         }
         for(ResourceView r: Nodes){
         	if(r.getXPosition() == x && r.getYPosition() == y){
+        		filled = true;
+        	}
+        }
+        for(Position p: taken){
+        	if(p.x == x && p.y == y){
         		filled = true;
         	}
         }
@@ -518,25 +521,134 @@ public class GameState implements Comparable<GameState> {
     public ResourceView getResource(int ID){
         return state.getResourceNode(ID);
     }
+    /*TODO I need to change this method slightly somehow to make it able to consider more than
+     * just the closest GM and wood if the closest one contains <200 for 2, <300 for 3 
+     */
     public List<MoveAction> getPossibleMoves(ArrayList<myPeasant> peas){
         List<MoveAction> list =  new ArrayList<MoveAction>();
         //First, add the positions surrounding townhall
         UnitView th = units.get(townhallID);
         Position thPos = new Position(th.getXPosition(), th.getYPosition());
-        list.add(getBestSurr(thPos));
-        //Next, add the positions next to all resource nodes which still contain resources
-        list.add(getBestSurr(getClosestGM(p.getID())));
-        list.add(getBestSurr(getClosestWood(p.getID())));
+        MoveAction move1 = null;
+        ArrayList<Position> taken = new ArrayList<Position>();
+        ArrayList<myPeasant> pList = new ArrayList<myPeasant>();
+        ArrayList<Position> targets = new ArrayList<Position>();
+        //This loop handles all of the moves of single peasants
+        for(myPeasant p: peas){
+        	//Add move to Town Hall
+        	pList.clear();
+        	targets.clear();
+            Position pos = (getBestSurr(thPos, taken));
+            pList.add(p);
+            targets.add(pos);
+            move1 = new MoveAction(pList, targets);
+            if(move1.preconditionsMet(this)){
+            	list.add(move1);
+            }
+            //Add Move to closestGM  
+            //TODO Add a check here to see if goldNodes = empty?
+            targets.clear();
+            Position gmPos = getBestSurr(getClosestGM(p.getID()), taken);
+            targets.add(gmPos);
+            move1 = new MoveAction(pList, targets);
+            if(move1.preconditionsMet(this)){
+            	list.add(move1);
+            }
+            //Add Move to closest Wood
+            targets.clear();
+            Position wPos = getBestSurr(getClosestWood(p.getID()), taken);
+            targets.add(wPos);
+            move1 = new MoveAction(pList, targets);
+            if(move1.preconditionsMet(this)){
+            	list.add(move1);
+            }
+        }
+        //This adds all combinations of move2s to the list
+ 
+
         return list;
     }
-    public Position getBestSurr(Position pos){
+    public List<MoveAction> getPossMove1(List<myPeasant> peas){
+    List<MoveAction> list = new ArrayList<MoveAction>();
+    for(myPeasant p: peas){
+    	
+    }
+    }
+    public MoveAction genMove(myPeasant p, PositionType t){
+    	
+    }
+    public MoveAction genMove(List<myPeasant> p, PositionType t){
+    	
+    }
+    public List<MoveAction> getPossMove2(List<myPeasant> peas){
+        List<MoveAction> list =  new ArrayList<MoveAction>();
+    	UnitView th = units.get(townhallID);
+        Position thPos = new Position(th.getXPosition(), th.getYPosition());
+        MoveAction move2 = null;
+        ArrayList<Position> taken = new ArrayList<Position>();
+        ArrayList<myPeasant> pList = new ArrayList<myPeasant>();
+        ArrayList<Position> targets = new ArrayList<Position>();
+        
+        if(peas.size()>1){
+        	for(int i = 0; i< peas.size(); i++){
+        		Position pos1 = null;
+        		for(int k = 0; k<=2; k++){
+        			
+        		pList.clear();
+            	targets.clear();
+            	taken.clear();
+            	myPeasant p1 = peas.get(i);
+                pList.add(peas.get(i));
+                if(k==0){
+                	pos1 = getBestSurr(p1, thPos, taken);
+                } else {
+                	
+                }
+                 = (getBestSurr(thPos, taken));
+                targets.add(pos1);
+                taken.add(pos1);
+        		for(int j = i+1; j< peas.size(); j++){
+        			//Add move 2 to TH
+        			myPeasant p2 = peas.get(j);
+        			pList.add(p2);
+        			Position pos2 = getBestSurr(thPos,taken);
+        			targets.add(pos2);
+        			move2 = new MoveAction(pList, targets);
+        			if(move2.preconditionsMet(this)){
+        				list.add(move2);
+        			}
+        			//Add move 2 to gold
+        			targets.remove(1);
+        			pos2 = getBestSurr(getClosestGM(p2.getID()), taken);
+        			targets.add(pos2);
+        			move2 = new MoveAction(pList, targets);
+        			if(move2.preconditionsMet(this)){
+        				list.add(move2);
+        			}
+        			//Add move 2 to wood
+        			targets.remove(1);
+        			pos2 = getBestSurr(getClosestGM(p2.getID()), taken);
+        			targets.add(pos2);
+        			move2 = new MoveAction(pList, targets);
+        			if(move2.preconditionsMet(this)){
+        				list.add(move2);
+        			}
+        		}
+        	}
+        	}
+        }
+        return list;
+    }
+    
+    
+    public Position getBestSurr(myPeasant p, Position pos, ArrayList<Position> taken){
         Position best = null;
         double shortest = Double.MAX_VALUE;
         double dist = 0;
         for(Direction d:  directionList){
             Position newPos = newPos(d, pos);
-            dist =  ChebDist(peasPos, pos);
-            if(positionFree(pos.x, pos.y)&& shortest > dist) {
+            dist =  ChebDist(p.getPos(), pos);
+            if(positionFree(pos.x, pos.y, taken)&& shortest > dist) {
                 shortest = dist;
                 best = newPos;
             }

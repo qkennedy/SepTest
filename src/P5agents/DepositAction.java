@@ -41,9 +41,4 @@ public class DepositAction implements StripsAction {
     public Action ResultantAction() {
         return Action.createCompoundDeposit(pID, thID);
     }
-	@Override
-	public int getPID() {
-		// TODO Auto-generated method stub
-		return pID;
-	}
 }

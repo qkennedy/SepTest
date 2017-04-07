@@ -1,24 +1,20 @@
 package P5agents;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import P4agents.Position;
-import P4agents.myPeasant;
 import edu.cwru.sepia.action.Action;
-import edu.cwru.sepia.environment.model.state.ResourceType;
-import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
-import edu.cwru.sepia.environment.model.state.Unit.UnitView;
-import edu.cwru.sepia.util.Direction;
 
 public class MoveAction implements StripsAction {
 
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
 	private ArrayList<myPeasant> peasants;
-	private ArrayList<Position> positions;
-	public MoveAction(ArrayList<myPeasant> peasants, ArrayList<Position> positions) {
-		this.peasants = peasants;
-		this.positions = positions;
+	private ArrayList<PositionType> targets;
+	private GameState state;
+	public MoveAction(ArrayList<myPeasant> pList, ArrayList<PositionType> targets, GameState state) {
+		this.peasants = pList;
+		this.targets = targets;
 	}
 	
 	@Override
@@ -26,40 +22,46 @@ public class MoveAction implements StripsAction {
         GameState copy = new GameState(state);
         int i = 0;
         for(myPeasant p: peasants){
-            copy.moveUnit(p,positions.get(i).x, positions.get(i).y);
-            copy.actions.push(this);
+        	p.setPosT(targets.get(i));
+        	i++;
         }
-        copy.moveUnit(state.units.get(uID),newPos.x, newPos.y);
-        copy.actions.push(this);
-        //TODO
         return copy;
 	}
 //Maybe add A* here to see if the location is actually reachable
 	public boolean preconditionsMet(GameState state) {
-		Position pos = newPos;
-		if(!state.positionExists(pos.x, pos.y)){
-			return false;
-		}
-		for(ResourceView view: state.Nodes){
-			if(pos.x == view.getXPosition()&&pos.y == view.getYPosition()){
-				return false;
+		
+		for(PositionType pos: targets){
+			if(pos.equals(PositionType.G)){
+				if(state.goldNodes.isEmpty()){
+					return false;
+				}
 			}
-		}
-		for(UnitView view: state.units){
-			if(pos.x == view.getXPosition()&&pos.y == view.getYPosition()){
-				return false;
+			if(pos.equals(PositionType.W)){
+				if(state.woodNodes.isEmpty()){
+					return false;
+				}
 			}
 		}
 		return true;
 	}
 
 	@Override
-	public Action ResultantAction() {
-		return Action.createCompoundMove(uID, newPos.x, newPos.y);
+	public List<Action> ResultantAction() {
+		List<Action> actions = new ArrayList<Action>();
+		for(int i = 0; i<peasants.size();i++){
+			myPeasant p = peasants.get(i);
+			Position pos = getPosByType(p.getID(), targets.get(i));
+			actions.add(Action.createCompoundMove(p.getID(), pos.x, pos.y));
+		}
+		return actions;
 	}
-
-	@Override
-	public int getPID() {
-		return uID;
+	public Position getPosByType(int pid, PositionType type){
+		if(type.equals(PositionType.TH)){
+			return state.thPos;
+		} else if(type.equals(PositionType.TH)){
+			return state.getClosestGM(pid);
+		} else {
+			return state.getClosestWood(pid);
+		}
 	}
 }

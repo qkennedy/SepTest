@@ -6,8 +6,8 @@ public class myPeasant {
     private int id;
     private int cAmt;
     private ResourceType rType;
+    private PositionType posType;
     private Position pos;
-    
     public myPeasant(int id){
         this.id = id;
     }
@@ -20,8 +20,8 @@ public class myPeasant {
         this.cAmt = cAmt;
     }
     
-    public void setPos(Position pos) {
-        this.pos = pos;
+    public void setPosT(PositionType posType) {
+        this.posType = posType;
     }
     
     public int getCAmt() {
@@ -36,8 +36,13 @@ public class myPeasant {
         return id;
     }
     
-    public Position getPos() {
-        return pos;
+    public PositionType getPosT() {
+        return posType;
     }
-    
+    public Position getPos(){
+    	return pos;
+    }
+    public void setPos(Position pos){
+    	this.pos = pos;
+    }
 }
