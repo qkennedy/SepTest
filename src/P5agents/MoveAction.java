@@ -1,5 +1,9 @@
 package P5agents;
 
+import java.util.ArrayList;
+
+import P4agents.Position;
+import P4agents.myPeasant;
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
@@ -10,16 +14,21 @@ public class MoveAction implements StripsAction {
 
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
-	private int uID;
-	private Position newPos;
-	public MoveAction(int uID, Position newPos) {
-		this.uID = uID;
-		this.newPos = newPos;
+	private ArrayList<myPeasant> peasants;
+	private ArrayList<Position> positions;
+	public MoveAction(ArrayList<myPeasant> peasants, ArrayList<Position> positions) {
+		this.peasants = peasants;
+		this.positions = positions;
 	}
 	
 	@Override
 	public GameState apply(GameState state) {
         GameState copy = new GameState(state);
+        int i = 0;
+        for(myPeasant p: peasants){
+            copy.moveUnit(p,positions.get(i).x, positions.get(i).y);
+            copy.actions.push(this);
+        }
         copy.moveUnit(state.units.get(uID),newPos.x, newPos.y);
         copy.actions.push(this);
         //TODO

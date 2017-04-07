@@ -1,5 +1,8 @@
 package P4agents;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
@@ -10,10 +13,10 @@ public class MoveAction implements StripsAction {
 
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
-	private int uID;
+	private ArrayList<myPeasant> peasants;
 	private Position newPos;
-	public MoveAction(int uID, Position newPos) {
-		this.uID = uID;
+	public MoveAction(ArrayList<myPeasant> peasants, ArrayList<Position> positions) {
+		this.peasants = peasants;
 		this.newPos = newPos;
 	}
 	
