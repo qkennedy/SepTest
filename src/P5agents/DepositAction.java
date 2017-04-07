@@ -1,44 +1,69 @@
 package P5agents;
 
+import java.util.ArrayList;
+
 import edu.cwru.sepia.action.Action;
-import edu.cwru.sepia.environment.model.state.ResourceType;
-import edu.cwru.sepia.environment.model.state.Unit.UnitView;
+
 
 public class DepositAction implements StripsAction {
     
-	public int pID, thID;
-	public ResourceType type;
+    public int thID;
+    private ArrayList<myPeasant> depPeas;
+    
     /**
      * This class takes a unit that is affected, and a unit doing the action
      * This sets the framework for how the STRIPS Actions should be implemented
-     * @param uID
+     * @param depPeas
      * @param thID
      */
-	public DepositAction(int pID, int thID){
-		this.pID = pID;
-		this.thID = thID;
-	}
+    public DepositAction(ArrayList<myPeasant> depPeas, int thID){
+        this.depPeas = depPeas;
+        this.thID = thID;
+    }
+    
     @Override
     public boolean preconditionsMet(GameState state) {
-
-        Position peasPos = state.peasPos;
-        Position thPos = state.thPos;
-        double xd = Math.abs(peasPos.x - thPos.x);
-        double yd = Math.abs(peasPos.y - thPos.y);
-        return((xd <= 1 && yd <= 1) && state.pAmt>0);
+        
+        for(myPeasant peas : depPeas) {
+            Position peasPos = peas.getPos();
+            Position thPos = state.thPos;
+            int amt = peas.getCAmt();
+            double xd = Math.abs(peasPos.x - thPos.x);
+            double yd = Math.abs(peasPos.y - thPos.y);
+            boolean precondition = (xd <= 1 && yd <= 1) && amt > 0;
+            
+            if(!precondition) {
+                return false;
+            }
+        }
+        
+        return true;
+        
     }
     
     @Override
     public GameState apply(GameState state) {
-    	GameState copy = state;
-        copy.deposit(pID, thID);
+        GameState copy = state;
+        
+        for(myPeasant peas : depPeas) {
+            copy.deposit(peas.getID(), thID);
+        }
+        
         copy.actions.push(this);
-        //TODO Add Cost Changes
+        
         return copy;
     }
     
     @Override
-    public Action ResultantAction() {
-        return Action.createCompoundDeposit(pID, thID);
+    public ArrayList<Action> ResultantAction() {
+        
+        ArrayList<Action> actionList = new ArrayList<Action>();
+        
+        for(myPeasant peas : depPeas) {
+            actionList.add(Action.createCompoundDeposit(peas.getID(), thID));
+        }
+        
+        return actionList;
     }
+
 }
