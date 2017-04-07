@@ -12,6 +12,7 @@ import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 import edu.cwru.sepia.util.Direction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -240,6 +241,21 @@ public class GameState implements Comparable<GameState> {
     public boolean positionExists(int x, int y) {
         return (x >= 0 && y >= 0 && x <= xExt && y <= yExt);
     }
+    public boolean positionFree(int x, int y) {
+        boolean filled = false;
+        Collection<myPeasant> ps = peasants.values();
+        for(myPeasant p: ps){
+        	if(p.getPos().x == x && p.getPos().y == y){
+        		filled = true;
+        	}
+        }
+        for(ResourceView r: Nodes){
+        	if(r.getXPosition() == x && r.getYPosition() == y){
+        		filled = true;
+        	}
+        }
+        return !filled;
+    }
     
     /**
      * Write your heuristic function here. Remember this must be admissible for the properties of A* to hold. If you
@@ -465,9 +481,8 @@ public class GameState implements Comparable<GameState> {
     }
     
     //Helper method that generates a Unit from a UnitView.
-    public void moveUnit(Unit.UnitView unitView, int x, int y) {
-        myPeasant peasant = peasants.get(unitView.getID());
-        peasant.setPos(new Position(x,y));
+    public void moveUnit(myPeasant p, int x, int y) {
+        p.setPos(new Position(x,y));
     }
     public void gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
         myPeasant peasant = peasants.get(unitView.getID());
@@ -503,40 +518,27 @@ public class GameState implements Comparable<GameState> {
     public ResourceView getResource(int ID){
         return state.getResourceNode(ID);
     }
-    public List<MoveAction> getPossibleMoves(int uid){
+    public List<MoveAction> getPossibleMoves(ArrayList<myPeasant> peas){
         List<MoveAction> list =  new ArrayList<MoveAction>();
         //First, add the positions surrounding townhall
         UnitView th = units.get(townhallID);
         Position thPos = new Position(th.getXPosition(), th.getYPosition());
         list.add(getBestSurr(thPos));
         //Next, add the positions next to all resource nodes which still contain resources
-        list.add(getBestSurr(getClosestGM(uid)));
-        list.add(getBestSurr(getClosestWood(uid)));
+        list.add(getBestSurr(getClosestGM(p.getID())));
+        list.add(getBestSurr(getClosestWood(p.getID())));
         return list;
     }
-    
-    public List<MoveAction> getSurrActions(Position pos){
-        List<MoveAction> list =  new ArrayList<MoveAction>();
-        for(Direction d:  directionList){
-            Position newPos = newPos(d, pos);
-            MoveAction move = new MoveAction(peasID, newPos);
-            if(move.preconditionsMet(this)) {
-                list.add(move);
-            }
-        }
-        return list;
-    }
-    public MoveAction getBestSurr(Position pos){
-        MoveAction best = null;
+    public Position getBestSurr(Position pos){
+        Position best = null;
         double shortest = Double.MAX_VALUE;
         double dist = 0;
         for(Direction d:  directionList){
             Position newPos = newPos(d, pos);
-            MoveAction move = new MoveAction(peasID, newPos);
             dist =  ChebDist(peasPos, pos);
-            if(move.preconditionsMet(this)&& shortest > dist) {
+            if(positionFree(pos.x, pos.y)&& shortest > dist) {
                 shortest = dist;
-                best = move;
+                best = newPos;
             }
         }
         return best;
