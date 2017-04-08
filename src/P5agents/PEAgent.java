@@ -14,7 +14,9 @@ import edu.cwru.sepia.environment.model.state.Unit;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -32,7 +34,8 @@ public class PEAgent extends Agent {
     private Map<Integer, Integer> peasantIdMap;
     private int townhallId;
     private int peasantTemplateId;
-
+    private List<Action> cAct;
+    private List<Action> pAct;
     public PEAgent(int playernum, Stack<StripsAction> plan) {
         super(playernum);
         peasantIdMap = new HashMap<Integer, Integer>();
@@ -98,12 +101,14 @@ public class PEAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
+    	List<Integer> idleList = new ArrayList<Integer>();
+    	idleList.addAll(peasantIdMap.keySet());
     	if(plan == null) {
     		System.out.println("Error: Plan Null");
     		return null;
     	}
     	
-    	if(plan.isEmpty()) {
+    	if(plan.isEmpty() && cAct.isEmpty()) {
     		System.out.println("Error: Plan Empty");
     		return null;
     	}
@@ -112,17 +117,37 @@ public class PEAgent extends Agent {
     	
     	if(stateView.getTurnNumber() != 0) {
     		Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
+        	idleList.clear();
     	    for (ActionResult res : actionResults.values()) {
-    	    	if (res.getFeedback() == ActionFeedback.INCOMPLETE) {
-    	    		return out;
+    	    	if (res.getFeedback() !=  ActionFeedback.INCOMPLETE) {
+    	    		idleList.add(res.getAction().getUnitId());
     	    	}
-    	    	
     	    }
+    	    if(idleList.isEmpty()){
+    	    	return out;
+    	    }
+    	}
+    	List<Action> rma = new ArrayList<Action>();
+    	List<Integer> rmi = new ArrayList<Integer>();
+    	for(int i: idleList){
+    		if(cAct != null){
+    			if(!cAct.isEmpty()){
+    				for(Action a: cAct){
+    					if(a.getUnitId()==i && !rmi.contains(i) && idleList.contains(i)){
+    						out.put(i, a);
+    						rma.add(a);
+    						rmi.add(i);
+    					}
+    				}
+    			}
+    		}
+    	}
+    	for(Action a: rma){
+    		cAct.remove(cAct.indexOf(a));
     	}
     	
     	StripsAction next = plan.pop();
-    	Action action = createSepiaAction(next);
-    	out.put(action.getUnitId(), action);
+    	cAct.addAll(createSepiaAction(next));
     	
         return out;
     }
@@ -132,7 +157,8 @@ public class PEAgent extends Agent {
      * @param action StripsAction
      * @return SEPIA representation of same action
      */
-    private Action createSepiaAction(StripsAction action) {
+    private List<Action> createSepiaAction(StripsAction action) {
+    	List<Action> list = new ArrayList<Action>();
     	
         return action.ResultantAction();
     }
