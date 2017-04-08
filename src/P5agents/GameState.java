@@ -49,6 +49,7 @@ public class GameState implements Comparable<GameState> {
     private double TCOST;
     public double gold;
     public double wood;
+    public int foodAmt;
     public List<Unit.UnitView> units;
     public boolean buildPeasants;
     public Position peasPos;
@@ -78,6 +79,7 @@ public class GameState implements Comparable<GameState> {
         this.state = state;
         this.playerNum = playernum;
         this.requiredGold = requiredGold;
+        this.foodAmt = 2;
         this.requiredWood = requiredWood;
         this.buildPeasants = buildPeasants; //For this project, buildPeasants will always be false. It will be true in Project 5.
         this.xExt = state.getXExtent();
@@ -114,6 +116,7 @@ public class GameState implements Comparable<GameState> {
         this.state = parent.state;
         this.playerNum = parent.playerNum;
         this.requiredGold = parent.requiredGold;
+        this.foodAmt = parent.foodAmt;
         this.requiredWood = parent.requiredWood;
         this.buildPeasants = parent.buildPeasants; //For this project, buildPeasants will always be false. It will be true in Project 5.
         this.xExt = parent.state.getXExtent();
@@ -231,6 +234,88 @@ public class GameState implements Comparable<GameState> {
                 
             }
         }
+        
+        
+        //START OF JACK'S CODE.
+        
+        ArrayList<myPeasant> peasList = new ArrayList<myPeasant>();
+        
+        for (Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
+            myPeasant peas = entry.getValue();
+            
+            peasList.add(peas);
+        }
+        
+        
+        //This for block determines all possible combinations of depositAction
+        /////////
+        
+        DepositAction depot = new DepositAction(peasList, townhallID);
+        
+        if(depot.preconditionsMet(this)) {
+            GameState child = new GameState(this);
+            child = depot.apply(child);
+            child.setParent(this);
+            children.add(child);
+            child.cost = cost + 1;
+        }
+        
+        ArrayList<myPeasant> iList = new ArrayList<myPeasant>();
+        ArrayList<myPeasant> jList = new ArrayList<myPeasant>();
+        ArrayList<myPeasant> ijList = new ArrayList<myPeasant>();
+        
+        for(int i = 0; i <= peasList.size() - 1; i++) {
+            
+            iList.clear();
+            myPeasant peas1 = peasList.get(i);
+            iList.add(peas1);
+            
+            DepositAction iDepot = new DepositAction(iList, townhallID);
+            
+            if(iDepot.preconditionsMet(this)) {
+                GameState child = new GameState(this);
+                child = iDepot.apply(child);
+                child.setParent(this);
+                children.add(child);
+                child.cost = cost + 1;
+            }
+            
+            for(int j = 1; j <= peasList.size() - 1; j++) {
+                if(j != i) {
+                    jList.clear();
+                    myPeasant peas2 = peasList.get(j);
+                    jList.add(peas2);
+                    
+                    DepositAction jDepot = new DepositAction(jList, townhallID);
+                    
+                    if(jDepot.preconditionsMet(this)) {
+                        GameState child = new GameState(this);
+                        child = jDepot.apply(child);
+                        child.setParent(this);
+                        children.add(child);
+                        child.cost = cost + 1;
+                    }
+                    
+                    ijList.addAll(iList); ijList.addAll(jList);
+                    
+                    DepositAction ijDepot = new DepositAction(ijList, townhallID);
+                    
+                    if(ijDepot.preconditionsMet(this)) {
+                        GameState child = new GameState(this);
+                        child = ijDepot.apply(child);
+                        child.setParent(this);
+                        children.add(child);
+                        child.cost = cost + 1;
+                    }
+                    
+                    ijList.clear();
+                    
+                }
+                
+            }
+            
+        }
+        /////////
         
         return children;
     }
@@ -502,6 +587,55 @@ public class GameState implements Comparable<GameState> {
         ResourceView prev = state.getResourceNode(resID);
         ResourceNode node = new ResourceNode(prev.getType(), prev.getXPosition(), prev.getXPosition(), prev.getAmountRemaining()-100, resID);
         return node.getView();
+    }
+    
+    public void addPeasant() {
+        
+        int currMaxID = getMaxID();
+        int newID = currMaxID + 1;
+        
+        List<Position> surrTwnhlPositions = getTownhallSurrPos();
+        int numPos = surrTwnhlPositions.size() - 1;
+        int randPosIndex = (int)(Math.random() * numPos + 0);
+        
+        Position spawnPos = surrTwnhlPositions.get(randPosIndex);
+        
+        myPeasant newPeas = new myPeasant(newID);
+        newPeas.setCAmt(0);
+        newPeas.setPos(spawnPos);
+        newPeas.setRType(null);
+        
+        peasants.put(newPeas.getID(), newPeas);
+        foodAmt -= 1;
+    }
+    
+    public List<Position> getTownhallSurrPos() {
+        List<Position> openPositions = new ArrayList<Position>();
+        
+        for(Direction d : directionList) {
+            Position newPos = newPos(d, thPos);
+            
+            if(newPos.x <= xExt && newPos.y <= yExt)
+                openPositions.add(newPos);
+        }
+        
+        return openPositions;
+    }
+    
+    public int getMaxID() {
+        
+        int maxID = 0;
+        
+        for(Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
+            myPeasant peas = entry.getValue();
+            
+            if(peas.getID() > maxID) {
+                maxID = peas.getID();
+            }
+            
+        }
+        
+        return maxID;
     }
     
     public void deposit(int uID, int thID){

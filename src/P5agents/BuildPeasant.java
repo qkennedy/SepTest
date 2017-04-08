@@ -1,47 +1,46 @@
 package P5agents;
 
-import P4agents.GameState;
-import P4agents.StripsAction;
+import java.util.ArrayList;
+
+import P5agents.GameState;
+import P5agents.StripsAction;
 import edu.cwru.sepia.action.Action;
 
 public class BuildPeasant implements StripsAction {
-
-	private int pID;
-	private int thID;
-	private GameState state;
-	
-	public BuildPeasant(int pID, int thID, GameState state) {
-		this.pID = pID;
-		this.thID = thID;
-		this.state = state;
-	}
-	
-	@Override
-	public int getPID() {
-		return pID;
-	}
-
-	@Override
-	public boolean preconditionsMet(GameState state) {
-		int numUnits = state.getUnitSize(); //substituting for food for now, as I am not sure how to get the amount of food that a townhall has.
-		int maxUnits = 4;
-		double peasBuyout = 400.0;
-		
-		return (state.gold >= peasBuyout && numUnits < maxUnits && state.buildPeasants);
-	}
-
-	@Override
-	public GameState apply(GameState state) {
-		GameState copy = state;
-		//include method to add new peasant to the state.
-		copy.actions.push(this);
-		return copy;
-	}
-
-	@Override
-	public Action ResultantAction() {
-		int tempID = state.getPeasantTemplateID();
-		return Action.createCompoundProduction(thID, tempID);
-	}
-
+    
+    private int thID;
+    private int tempID;
+    
+    public BuildPeasant(int thID, int tempID) {
+        this.thID = thID;
+        this.tempID = tempID;
+    }
+    
+    @Override
+    public boolean preconditionsMet(GameState state) {
+        
+        double peasBuyout = 400.0;
+        int foodAmt = state.foodAmt;
+        
+        return (state.gold >= peasBuyout && foodAmt > 0 && state.buildPeasants);
+    }
+    
+    @Override
+    public GameState apply(GameState state) {
+        GameState copy = state;
+        //include method to add new peasant to the state.
+        //state.createUnit();
+        copy.actions.push(this);
+        return copy;
+    }
+    
+    @Override
+    public ArrayList<Action> ResultantAction() {
+        ArrayList<Action> actionList = new ArrayList<Action>();
+        
+        actionList.add(Action.createCompoundProduction(thID, tempID));
+        
+        return actionList;
+    }
+    
 }

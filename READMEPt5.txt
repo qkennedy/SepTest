@@ -3,3 +3,9 @@ Jack:
 
 Quinn:
 	Okay, so, I got the code related to the last portion of the project working (mostly).  I think this was an important step in P5 considering it relies on P4 working.  Still having some quirky issues that I think could be resolved by implementing hash to quickly check for repeated states, and improving my heuristics to properly take into account distance traveled in a move.  Overall, I think this went decent.  Kind of confused documentation wise, were we supposed to keep track of everything past initial state on our own? that was eventually how I got it to work but I feel like there has to be a better way to actively change the state.  
+
+==========
+Week 2:
+
+Jack:
+	For this week, I implemented myPeasant and replaced all instances of peasPos / peasAmt, etc. in GameState with said class. I also reimplemented DepositAction, GatherGoldAction and GatherWoodAction to accommodate multiple peasants. Additionally, I created a BuildPeasant action operator. Finally, I created additional helper methods in GameState and implemented the code that generates all possible combinations of DepositActions in the generateChildren method of GameState.
