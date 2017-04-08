@@ -9,12 +9,12 @@ public class MoveAction implements StripsAction {
 
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
-	private ArrayList<myPeasant> peasants;
-	private ArrayList<PositionType> targets;
+	private List<myPeasant> peasants;
+	private List<PositionType> targets;
 	private GameState state;
-	public MoveAction(ArrayList<myPeasant> pList, ArrayList<PositionType> targets, GameState state) {
-		this.peasants = pList;
-		this.targets = targets;
+	public MoveAction(List<myPeasant> pl, List<PositionType> pt, GameState state) {
+		this.peasants = pl;
+		this.targets = pt;
 	}
 	
 	@Override
