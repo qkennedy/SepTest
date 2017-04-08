@@ -101,7 +101,6 @@ public class PlannerAgent extends Agent {
         
         while(!openList.isEmpty() && !openList.peek().isGoal()) {
             
-            curr = openList.poll();
             List<GameState> currChildren = curr.generateChildren();
             
             if(currChildren.size() != 0) {

@@ -10,6 +10,16 @@ public class myPeasant {
     private Position pos;
     public myPeasant(int id){
         this.id = id;
+        posType = PositionType.TH;
+        rType = null;
+        cAmt = 0;
+    }
+    public myPeasant(myPeasant c){
+    	this.id = c.id;
+    	this.cAmt = c.cAmt;
+    	this.rType = c.rType;
+    	this.posType = c.posType;
+    	this.pos = c.pos;
     }
     
     public void setRType(ResourceType rType) {

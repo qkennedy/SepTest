@@ -30,6 +30,7 @@ public class BuildPeasant implements StripsAction {
         GameState copy = state;
         //include method to add new peasant to the state.
         //state.createUnit();
+        copy.addPeasant();
         copy.actions.push(this);
         return copy;
     }

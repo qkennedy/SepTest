@@ -13,17 +13,17 @@ public class MoveAction implements StripsAction {
 
 	//takes pid and direction
 	//have a switch statement for preconditionsMet
-	private ArrayList<myPeasant> peasants;
+	private int uid;
 	private Position newPos;
-	public MoveAction(ArrayList<myPeasant> peasants, ArrayList<Position> positions) {
-		this.peasants = peasants;
+	public MoveAction(int uid, Position newPos) {
+		this.uid = uid;
 		this.newPos = newPos;
 	}
 	
 	@Override
 	public GameState apply(GameState state) {
         GameState copy = new GameState(state);
-        copy.moveUnit(state.units.get(uID),newPos.x, newPos.y);
+        copy.moveUnit(state.units.get(uid),newPos.x, newPos.y);
         copy.actions.push(this);
         //TODO
         return copy;
@@ -49,11 +49,11 @@ public class MoveAction implements StripsAction {
 
 	@Override
 	public Action ResultantAction() {
-		return Action.createCompoundMove(uID, newPos.x, newPos.y);
+		return Action.createCompoundMove(uid, newPos.x, newPos.y);
 	}
 
 	@Override
 	public int getPID() {
-		return uID;
+		return uid;
 	}
 }

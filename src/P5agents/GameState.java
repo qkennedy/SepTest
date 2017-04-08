@@ -52,9 +52,6 @@ public class GameState implements Comparable<GameState> {
     public int foodAmt;
     public List<Unit.UnitView> units;
     public boolean buildPeasants;
-    public Position peasPos;
-    public ResourceType pCType;
-    public int pAmt;
     public int peasID;
     public int townhallID;
     public Position thPos;
@@ -64,6 +61,7 @@ public class GameState implements Comparable<GameState> {
     public Stack<StripsAction> actions;
     public List<Direction> directionList;
     public HashMap<Integer, myPeasant> peasants = new HashMap<Integer, myPeasant>();
+    public List<myPeasant> peas1 = new ArrayList<myPeasant>();
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -99,6 +97,7 @@ public class GameState implements Comparable<GameState> {
             String unitType = unit.getTemplateView().getName().toLowerCase();
             if (unitType.equals("peasant")) {
                 myPeasant peas = new myPeasant(unitId);
+                peas.setPos(thPos);
                 peasants.put(unitId, peas);
             }
             if (unitType.equals("townhall")) {
@@ -114,6 +113,7 @@ public class GameState implements Comparable<GameState> {
     }
     public GameState(GameState parent){
         this.state = parent.state;
+        this.parent = parent;
         this.playerNum = parent.playerNum;
         this.requiredGold = parent.requiredGold;
         this.foodAmt = parent.foodAmt;
@@ -158,7 +158,9 @@ public class GameState implements Comparable<GameState> {
             }
         }
         this.peasants = new HashMap<Integer, myPeasant>();
-        peasants.putAll(parent.peasants);
+        for(int i = 0; i< parent.peasants.size(); i++){
+        	this.peasants.put((Integer)parent.peasants.keySet().toArray()[i],(myPeasant) parent.peasants.values().toArray()[i]);
+        }
         cost = parent.cost;
         actions = new Stack();
         actions.addAll(parent.actions);
@@ -184,140 +186,124 @@ public class GameState implements Comparable<GameState> {
      * @return A list of the possible successor states and their associated actions
      */
     public List<GameState> generateChildren() {
-        
-        List<GameState> children = new ArrayList<GameState>();
-        
-        for (Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
-            
-            myPeasant peas = entry.getValue();
-            int ID = peas.getID();
-            
-            
-            DepositAction depot = new DepositAction(ID, townhallID);
-            
-            if(depot.preconditionsMet(this)) {
-                GameState child = new GameState(this);
-                child = depot.apply(child);
-                child.setParent(this);
-                children.add(child);
-                child.cost = cost + 1;
-            }
-            for(ResourceView woodSource : woodNodes) {
-                GatherWoodAction woodAction = new GatherWoodAction(ID, woodSource.getID());
-                
-                if(woodAction.preconditionsMet(this)) {
-                    GameState child = new GameState(this);
-                    child = woodAction.apply(child);
-                    children.add(child);
-                    child.cost = cost + 1;
-                }
-            }
-            for(ResourceView goldSource : goldNodes) {
-                GatherGoldAction goldAction = new GatherGoldAction(ID, goldSource.getID());
-                
-                if(goldAction.preconditionsMet(this)) {
-                    GameState child = new GameState(this);
-                    child = goldAction.apply(child);
-                    children.add(child);
-                    child.cost = cost + 1;
-                }
-            }
-            List<MoveAction> moves = getPossibleMoves((List<myPeasant>) peasants.values());
-            for(MoveAction move : moves) {
-                if(move.preconditionsMet(this)) {
-                    GameState child = new GameState(this);
-                    child = move.apply(child);
-                    child.setParent(this);
-                    children.add(child);
-                    child.cost = cost + 1;
-                }
-                
-            }
-        }
-        
-        
-        //START OF JACK'S CODE.
-        
-        ArrayList<myPeasant> peasList = new ArrayList<myPeasant>();
-        
-        for (Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
-            myPeasant peas = entry.getValue();
-            
-            peasList.add(peas);
-        }
-        
-        
-        //This for block determines all possible combinations of depositAction
-        /////////
-        
-        DepositAction depot = new DepositAction(peasList, townhallID);
-        
-        if(depot.preconditionsMet(this)) {
-            GameState child = new GameState(this);
-            child = depot.apply(child);
-            child.setParent(this);
-            children.add(child);
-            child.cost = cost + 1;
-        }
-        
-        ArrayList<myPeasant> iList = new ArrayList<myPeasant>();
-        ArrayList<myPeasant> jList = new ArrayList<myPeasant>();
-        ArrayList<myPeasant> ijList = new ArrayList<myPeasant>();
-        
-        for(int i = 0; i <= peasList.size() - 1; i++) {
-            
-            iList.clear();
-            myPeasant peas1 = peasList.get(i);
-            iList.add(peas1);
-            
-            DepositAction iDepot = new DepositAction(iList, townhallID);
-            
-            if(iDepot.preconditionsMet(this)) {
-                GameState child = new GameState(this);
-                child = iDepot.apply(child);
-                child.setParent(this);
-                children.add(child);
-                child.cost = cost + 1;
-            }
-            
-            for(int j = 1; j <= peasList.size() - 1; j++) {
-                if(j != i) {
-                    jList.clear();
-                    myPeasant peas2 = peasList.get(j);
-                    jList.add(peas2);
-                    
-                    DepositAction jDepot = new DepositAction(jList, townhallID);
-                    
-                    if(jDepot.preconditionsMet(this)) {
-                        GameState child = new GameState(this);
-                        child = jDepot.apply(child);
-                        child.setParent(this);
-                        children.add(child);
-                        child.cost = cost + 1;
-                    }
-                    
-                    ijList.addAll(iList); ijList.addAll(jList);
-                    
-                    DepositAction ijDepot = new DepositAction(ijList, townhallID);
-                    
-                    if(ijDepot.preconditionsMet(this)) {
-                        GameState child = new GameState(this);
-                        child = ijDepot.apply(child);
-                        child.setParent(this);
-                        children.add(child);
-                        child.cost = cost + 1;
-                    }
-                    
-                    ijList.clear();
-                    
-                }
-                
-            }
-            
-        }
-        /////////
-        
-        return children;
+
+    	List<GameState> children = new ArrayList<GameState>();
+    	ArrayList<myPeasant> peasList = new ArrayList<myPeasant>();
+
+    	for (Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
+    		myPeasant peas = entry.getValue();
+
+    		peasList.add(peas);
+    	}
+
+    	DepositAction depot = new DepositAction(peasList, townhallID);
+
+    	if(depot.preconditionsMet(this)) {
+    		GameState child = new GameState(this);
+    		child = depot.apply(child);
+    		child.setParent(this);
+    		children.add(child);
+    		child.cost = cost + 1;
+    	}
+
+    	ArrayList<myPeasant> iList = new ArrayList<myPeasant>();
+    	ArrayList<myPeasant> jList = new ArrayList<myPeasant>();
+    	ArrayList<myPeasant> ijList = new ArrayList<myPeasant>();
+
+    	for(int i = 0; i <= peasList.size() - 1; i++) {
+
+    		iList.clear();
+    		myPeasant peas1 = peasList.get(i);
+    		iList.add(peas1);
+
+    		DepositAction iDepot = new DepositAction(iList, townhallID);
+
+    		if(iDepot.preconditionsMet(this)) {
+    			GameState child = new GameState(this);
+    			child = iDepot.apply(child);
+    			child.setParent(this);
+    			children.add(child);
+    			child.cost = cost + 1;
+    		}
+
+    		for(int j = 1; j <= peasList.size() - 1; j++) {
+    			if(j != i) {
+    				jList.clear();
+    				myPeasant peas2 = peasList.get(j);
+    				jList.add(peas2);
+
+    				DepositAction jDepot = new DepositAction(jList, townhallID);
+
+    				if(jDepot.preconditionsMet(this)) {
+    					GameState child = new GameState(this);
+    					child = jDepot.apply(child);
+    					child.setParent(this);
+    					children.add(child);
+    					child.cost = cost + 1;
+    				}
+
+    				ijList.addAll(iList); ijList.addAll(jList);
+
+    				DepositAction ijDepot = new DepositAction(ijList, townhallID);
+
+    				if(ijDepot.preconditionsMet(this)) {
+    					GameState child = new GameState(this);
+    					child = ijDepot.apply(child);
+    					child.setParent(this);
+    					children.add(child);
+    					child.cost = cost + 1;
+    				}
+
+    				ijList.clear();
+
+    			}
+
+    		}
+
+    	}
+    	List<MoveAction> moves = getPossibleMoves(peasList);
+    	for(MoveAction move : moves) {
+    		if(move.preconditionsMet(this)) {
+    			GameState child = new GameState(this);
+    			child = move.apply(child);
+    			child.setParent(this);
+    			children.add(child);
+    			child.cost = cost + 1;
+    		}
+    	}
+    	GatherAction gAct = getGatherAction(peasList);
+    	if(gAct.preconditionsMet(this)){
+    		GameState child = new GameState(this);
+    		child = gAct.apply(child);
+    		child.setParent(this);
+    		children.add(child);
+    		child.cost = cost + 1;
+    	}
+    	BuildPeasant b = getBP();
+    	if(b.preconditionsMet(this) && (gold + 200*peasants.size()) < requiredGold){
+    		GameState child = new GameState(this);
+    		child = b.apply(child);
+    		child.setParent(this);
+    		children.add(child);
+    		child.cost = cost + 1;
+    	}
+    	return children;
+    }
+    public GatherAction getGatherAction(List<myPeasant> peas){
+    	List<myPeasant> pList = new ArrayList<myPeasant>();
+    	List<Integer> rList = new ArrayList<Integer>();
+    	for(myPeasant p: peas){
+    		for(ResourceView r: Nodes){
+    			if(p.getPos().x == r.getXPosition() && p.getPos().y == r.getYPosition()){
+    				pList.add(p);
+    				rList.add(r.getID());
+    			}
+    		}
+    	}
+    	return new GatherAction(pList, rList);
+    }
+    public BuildPeasant getBP(){
+    	return new BuildPeasant(townhallID,state.getTemplate(playerNum, "Peasant").getID());
     }
     
     //Helper method: Determines if a position on the map exists.
@@ -381,12 +367,7 @@ public class GameState implements Comparable<GameState> {
         
         double woodDist;
         double carryCoeff;
-        if(pAmt!=0){
-            carryCoeff = 1;
-        } else {
-            carryCoeff = 0;
-        }
-        return (gdiff/20  + wdiff/20) - tdiff;
+        return (gdiff/20  + wdiff/20) - tdiff + (peasants.size() - 1) * 400;
     }
     public Position getClosestWood(int pID){
         double closest = Double.MAX_VALUE;
@@ -483,7 +464,7 @@ public class GameState implements Comparable<GameState> {
         
         boolean pos = true;
         boolean carrying = true;
-        
+        boolean post = true;
         if(peasants.size() == other.peasants.size()) {
             
             for(Map.Entry<Integer, myPeasant> entry : peasants.entrySet()) {
@@ -502,13 +483,14 @@ public class GameState implements Comparable<GameState> {
                             pos = false;
                             break;
                         }
+                        post = !peas.getPosT().equals(otherPeas.getPosT());
                     }
                 }
             }
             
         }
         
-        return res && pos && carrying;
+        return res && pos && carrying && post;
     }
     
     /**
@@ -543,8 +525,14 @@ public class GameState implements Comparable<GameState> {
         return yExt;
     }
     
-    public void gatherFromNode(int pID, int resID, ResourceType type){
-        gatherToUnit(units.get(pID), type, 100);
+    public void gatherFromNode(int pID, int resID){
+    	ResourceType type;
+    	if(state.getResourceNode(resID).getType().equals(ResourceNode.Type.GOLD_MINE)){
+    		type = ResourceType.GOLD;
+    	} else {
+    		type = ResourceType.WOOD;
+    	}
+        gatherToUnit(pID, type, 100);
         if(type.equals(ResourceType.GOLD)){
             ResourceView rView = gatherGoldNode(resID);
             for(ResourceView view: Nodes){
@@ -572,8 +560,8 @@ public class GameState implements Comparable<GameState> {
     public void moveUnit(myPeasant p, int x, int y) {
         p.setPos(new Position(x,y));
     }
-    public void gatherToUnit(Unit.UnitView unitView, ResourceType type, int amt ) {
-        myPeasant peasant = peasants.get(unitView.getID());
+    public void gatherToUnit(int pid, ResourceType type, int amt ) {
+        myPeasant peasant = peasants.get(pid);
         peasant.setRType(type);
         peasant.setCAmt(amt);
         
@@ -593,16 +581,11 @@ public class GameState implements Comparable<GameState> {
         
         int currMaxID = getMaxID();
         int newID = currMaxID + 1;
-        
-        List<Position> surrTwnhlPositions = getTownhallSurrPos();
-        int numPos = surrTwnhlPositions.size() - 1;
-        int randPosIndex = (int)(Math.random() * numPos + 0);
-        
-        Position spawnPos = surrTwnhlPositions.get(randPosIndex);
-        
+       
         myPeasant newPeas = new myPeasant(newID);
         newPeas.setCAmt(0);
-        newPeas.setPos(spawnPos);
+        newPeas.setPos(thPos);
+        newPeas.setPosT(PositionType.TH);
         newPeas.setRType(null);
         
         peasants.put(newPeas.getID(), newPeas);
@@ -659,13 +642,17 @@ public class GameState implements Comparable<GameState> {
      * just the closest GM and wood if the closest one contains <200 for 2, <300 for 3 
      */
     public List<MoveAction> getPossibleMoves(List<myPeasant> peas){
+    	List<myPeasant> cp = new ArrayList<myPeasant>();
+    	for(myPeasant p: peas){
+    		cp.add(new myPeasant(p));
+    	}
         List<MoveAction> list =  new ArrayList<MoveAction>();
         if(peas.size()==3){
-        	list.addAll(getPossMove3(peas));
+        	list.addAll(getPossMove3(cp));
         } else if(peas.size() == 2){
-        	list.addAll(getPossMove2(peas));
+        	list.addAll(getPossMove2(cp));
         } else {
-        	list.addAll(getPossMove1(peas));
+        	list.addAll(getPossMove1(cp));
         }
  
 
@@ -768,6 +755,7 @@ public class GameState implements Comparable<GameState> {
     	List<myPeasant> pl = new ArrayList<myPeasant>();
     	pl.add(p);
     	List<PositionType> pt = new ArrayList<PositionType>();
+    	pt.add(t);
     	return new MoveAction(pl,pt, this);
     }
     
