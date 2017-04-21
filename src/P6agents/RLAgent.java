@@ -394,11 +394,51 @@ public double calcQValue(State.StateView stateView,
      * @param defenderId An enemy footman. The one you are considering attacking.
      * @return The array of feature function outputs.
      */
-    public double[] calculateFeatureVector(State.StateView stateView,
-                                           History.HistoryView historyView,
-                                           int attackerId,
-                                           int defenderId) {
-        return null;
+    public double[] calculateFeatureVector(State.StateView stateView, History.HistoryView historyView,int attackerId,int defenderId) {
+        
+        double constant = 3.0;
+        double chebDist = chebDist(stateView, attackerId, defenderId);
+        double numFriendsAttackingE = numFAttackingE(stateView, historyView, defenderId);
+        double enemRemainingHealth = enemRemainingHealth(stateView, defenderId);
+        
+        double[] featureVector = {constant, numFriendsAttackingE, chebDist, enemRemainingHealth};
+        
+        return featureVector;
+    }
+    
+    public double enemRemainingHealth(State.StateView stateView, int enemId) {
+        
+        UnitView enemUnit = stateView.getUnit(enemId);
+        int health = enemUnit.getHP();
+        
+        return (double)health;
+        
+    }
+    
+    public double numFAttackingE(State.StateView stateView, History.HistoryView historyView, int enemId) {
+        
+        double numAttackingE = 0.0;
+        
+        for(Order order : orders) {
+            
+            if (enemId == order.defenderId) {
+                numAttackingE = numAttackingE + 1.0;
+            }
+            
+        }
+        
+        return numAttackingE;
+    }
+    
+    public double chebDist(State.StateView stateView, int friend, int enem) {
+        
+        UnitView friendUnit = stateView.getUnit(friend);
+        UnitView enemUnit = stateView.getUnit(enem);
+        
+        double dx = Math.abs(friendUnit.getXPosition() - enemUnit.getXPosition());
+        double dy = Math.abs(friendUnit.getYPosition() - enemUnit.getYPosition());
+        
+        return Math.max(dx, dy);
     }
 
     /**
