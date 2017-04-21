@@ -1,4 +1,5 @@
-package edu.cwru.sepia.agent;
+
+package P6agents;
 
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.action.ActionFeedback;
@@ -10,6 +11,7 @@ import edu.cwru.sepia.environment.model.history.DeathLog;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
+import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 
 import java.io.*;
 import java.util.*;
@@ -44,7 +46,6 @@ public class RLAgent extends Agent {
      * change this seed so make sure that your agent works for more than the default seed.
      */
     public final Random random = new Random(12345);
-    public Set
     /**
      * Your Q-function weights.
      */
@@ -61,6 +62,7 @@ public class RLAgent extends Agent {
     public int damagePerSwing;
     public int baseFMHealth;
     public int triggerUnitId;
+    public List<Order> orders;
     public RLAgent(int playernum, String[] args) {
         super(playernum);
 
@@ -282,8 +284,70 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        return 0;
+public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
+        
+    	double damageReward = 0.0;
+    	double actionReward = 0.0;
+    	double deathReward = 0.0;
+    	double totalReward = 0.0;
+    	int id = footmanId;
+    	
+    	int prevTurn = stateView.getTurnNumber() - 1;
+    	
+    	if (prevTurn < 0) {
+    		return 0.0;
+    	}
+    	
+    		
+    	//This for block determines the amount of damage given / taken within the last round.
+    	for(DamageLog damageLogs : historyView.getDamageLogs(prevTurn)) {
+    			
+    		int attackerId = damageLogs.getAttackerID();
+    		int defenderId = damageLogs.getDefenderID();
+    		int damageAmt = damageLogs.getDamage();
+    		
+    			
+    		if (attackerId == id) {
+    			damageReward = damageReward + damageAmt;
+    	
+    			//Checks to see if the unit the friendly footman attacked was killed. If so, then a reward is given.
+    		    UnitView enemUnit = stateView.getUnit(defenderId);
+    		    if(enemUnit.getHP() <= 0) {
+    		    	deathReward = deathReward + 100.0;
+    		    }
+    		    
+    		} else if (defenderId == id) {
+    			damageReward = damageReward - damageAmt;
+    		}
+    			
+   		}
+    		
+    	//This for block determines the death reward amount within the last round.
+    	for(DeathLog deathLogs : historyView.getDeathLogs(prevTurn)) {
+    			
+    		int deadUnit = deathLogs.getDeadUnitID();
+    			
+    		if (id == deadUnit) {
+    			deathReward = deathReward - 100.0;
+    		}
+    			
+   		}
+    
+    		//This block of code determines how many actions were performed by friendly footmen.
+    	Map<Integer, Action> commandsIssued = historyView.getCommandsIssued(0, prevTurn);
+    		
+    	for (Map.Entry<Integer, Action> commandEntry : commandsIssued.entrySet()) {
+    			
+    		if (commandEntry.getKey() == id) {
+    			actionReward = actionReward - 0.1;
+    		}
+    			
+   		}
+    	
+    	
+    	totalReward = damageReward + actionReward + deathReward;
+    	
+    	return totalReward;
     }
 
     /**
@@ -300,13 +364,19 @@ public class RLAgent extends Agent {
      * @param defenderId An enemy footman that your footman would be attacking
      * @return The approximate Q-value
      */
-    public double calcQValue(State.StateView stateView,
-                             History.HistoryView historyView,
-                             int attackerId,
-                             int defenderId) {
-        return 0;
-    }
+public double calcQValue(State.StateView stateView,
+		History.HistoryView historyView,
+		int attackerId,
+		int defenderId) {
+	double Qval = 0.0;
+	double[] featureVector = calculateFeatureVector(stateView, historyView, attackerId, defenderId);
 
+	for(int i = 0; i <= featureVector.length - 1; i++) {
+		Qval = Qval + (featureVector[i] * weights[i]);
+	}
+
+	return Qval;
+}
     /**
      * Given a state and action calculate your features here. Please include a comment explaining what features
      * you chose and why you chose them.
@@ -405,7 +475,7 @@ public class RLAgent extends Agent {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(path));
             String line;
-            List<Double> weights = new LinkedList<>();
+            List<Double> weights = new LinkedList<Double>();
             while((line = reader.readLine()) != null) {
                 weights.add(Double.parseDouble(line));
             }
