@@ -165,9 +165,18 @@ public class RLAgent extends Agent {
     		updateUnitLists(stateView);
     		//Next, determine what unit triggered the event should be triggerUnitId
     		//Right now this is always an enemy, check our current attack actions, see which of our units should be affected
+    		List<Order> affectedUnits = getAffectedUnits(stateView, triggerUnitId);
     		//if current attack order is attacking tUID, add them to the list
-    		//Begin process of updating orders
-    		//This process begins with updating unit weights
+    		//Did that, should pull their orders off of the orders list here, so that # attacking computes correctly
+    		for(int i = 0; i< affectedUnits.size(); i++){
+    			orders.remove(affectedUnits.get(i));
+    		}    		
+    		//Begin process of updating orders for each footman
+    		for(int i = 0; i < affectedUnits.size(); i++){ 	
+    			//This process begins with updating unit weights
+    			updateWeights()
+    		}
+    		
     		//
     	
     	}
@@ -220,8 +229,21 @@ public class RLAgent extends Agent {
     	 enemyFootmen = eUpdFootmen;
     	 
     }
-    public List<Integer> getAffectedUnits(State.StateView stateView, int eID){
-    	
+    /**
+     * This method takes the state, and an enemyId, usually the enemy who triggered the Event, 
+     * and finds which units need to recalculate their orders, based on this.
+     * @param stateView
+     * @param eId
+     * @return
+     */
+    public List<Order> getAffectedUnits(State.StateView stateView, int eId){
+    	List<Order> affectedUnits  = new ArrayList<Order>();
+    	for(Order o: orders){
+    		if(o.defenderId == eId){
+    			affectedUnits.add(o);
+    		}
+    	}
+    	return affectedUnits;
     }
     /**
      * Calculate the updated weights for this agent. 
@@ -501,6 +523,8 @@ public double calcQValue(State.StateView stateView,
 class Order {
 	public int attackerId;
 	public int defenderId;
+	public double[] oldWeights;
+	public double[] oldFeatures;
 	public Order(int aId, int dId){
 		this.attackerId = aId;
 		this.defenderId = dId;
