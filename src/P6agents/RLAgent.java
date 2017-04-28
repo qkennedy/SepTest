@@ -352,18 +352,18 @@ public class RLAgent extends Agent {
         //The position of the enemyID in enemIDs corresponds to the position of its Q value in qVals.
         for (Integer enemy : enemyFootmen) {
             
-            double QVal = calcQValue(stateView, historyView, attackerId, enemy);
+            Double QVal = calcQValue(stateView, historyView, attackerId, enemy);
             enemIDs.add(enemy);
             qVals.add(QVal);
             
         }
         
-        double maxQVal = getMaxQ(stateView, historyView, attackerId);
+        Double maxQVal = getMaxQ(stateView, historyView, attackerId);
         int bestEnem = enemIDs.get(qVals.indexOf(maxQVal));
         
         //This block of code determines whether or not the agent should take a random action instead of the best action.
         int randVal = generateRandomVal(0, 100);
-        double randFactor = (double)(randVal/100);
+        Double randFactor = (double)(randVal/100);
         
         if(randFactor <= epsilon) {
             
@@ -387,18 +387,18 @@ public class RLAgent extends Agent {
         
     }
     
-    public double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
+    public Double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
         
         List<Double> qVals = new ArrayList<Double>();
         
         for (Integer enemy : enemyFootmen) {
             
-            double QVal = calcQValue(stateView, historyView, attackerId, enemy);
+            Double QVal = calcQValue(stateView, historyView, attackerId, enemy);
             qVals.add(QVal);
             
         }
         
-        double max = qVals.get(0);
+        Double max = qVals.get(0);
         
         for (Double qVal : qVals) {
             if (qVal >= max) {
@@ -442,12 +442,12 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
+    public Double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
         
-    	double damageReward = 0.0;
-    	double actionReward = 0.0;
-    	double deathReward = 0.0;
-    	double totalReward = 0.0;
+    	Double damageReward = 0.0;
+    	Double actionReward = 0.0;
+    	Double deathReward = 0.0;
+    	Double totalReward = 0.0;
     	int id = footmanId;
     	
     	int prevTurn = stateView.getTurnNumber() - 1;
@@ -522,12 +522,12 @@ public class RLAgent extends Agent {
      * @param defenderId An enemy footman that your footman would be attacking
      * @return The approximate Q-value
      */
-    public double calcQValue(State.StateView stateView,
+    public Double calcQValue(State.StateView stateView,
 		History.HistoryView historyView,
 		int attackerId,
 		int defenderId) {
-	double Qval = 0.0;
-	double[] featureVector = calculateFeatureVector(stateView, historyView, attackerId, defenderId);
+	Double Qval = 0.0;
+	Double[] featureVector = calculateFeatureVector(stateView, historyView, attackerId, defenderId);
 
 	for(int i = 0; i <= featureVector.length - 1; i++) {
 		Qval = Qval + (featureVector[i] * weights[i]);
@@ -540,7 +540,7 @@ public class RLAgent extends Agent {
      * Given a state and action calculate your features here. Please include a comment explaining what features
      * you chose and why you chose them.
      *
-     * All of your feature functions should evaluate to a double. Collect all of these into an array. You will
+     * All of your feature functions should evaluate to a Double. Collect all of these into an array. You will
      * take a dot product of this array with the weights array to get a Q-value for a given state action.
      *
      * It is a good idea to make the first value in your array a constant. This just helps remove any offset
@@ -553,19 +553,19 @@ public class RLAgent extends Agent {
      * @param defenderId An enemy footman. The one you are considering attacking.
      * @return The array of feature function outputs.
      */
-    public double[] calculateFeatureVector(State.StateView stateView, History.HistoryView historyView,int attackerId,int defenderId) {
+    public Double[] calculateFeatureVector(State.StateView stateView, History.HistoryView historyView,int attackerId,int defenderId) {
         
-        double constant = 3.0;
-        double chebDist = chebDist(stateView, attackerId, defenderId);
-        double numFriendsAttackingE = numFAttackingE(stateView, historyView, defenderId);
-        double enemRemainingHealth = enemRemainingHealth(stateView, defenderId);
+        Double constant = 3.0;
+        Double chebDist = chebDist(stateView, attackerId, defenderId);
+        Double numFriendsAttackingE = numFAttackingE(stateView, historyView, defenderId);
+        Double enemRemainingHealth = enemRemainingHealth(stateView, defenderId);
         
-        double[] featureVector = {constant, numFriendsAttackingE, chebDist, enemRemainingHealth};
+        Double[] featureVector = {constant, numFriendsAttackingE, chebDist, enemRemainingHealth};
         
         return featureVector;
     }
     
-    public double enemRemainingHealth(State.StateView stateView, int enemId) {
+    public Double enemRemainingHealth(State.StateView stateView, int enemId) {
         
         UnitView enemUnit = stateView.getUnit(enemId);
         int health = enemUnit.getHP();
@@ -574,9 +574,9 @@ public class RLAgent extends Agent {
         
     }
     
-    public double numFAttackingE(State.StateView stateView, History.HistoryView historyView, int enemId) {
+    public Double numFAttackingE(State.StateView stateView, History.HistoryView historyView, int enemId) {
         
-        double numAttackingE = 0.0;
+        Double numAttackingE = 0.0;
         
         for(Order order : orders) {
             
@@ -645,7 +645,7 @@ public class RLAgent extends Agent {
             // open a new file writer. Set append to false
             BufferedWriter writer = new BufferedWriter(new FileWriter(path, false));
 
-            for (double weight : weights) {
+            for (Double weight : weights) {
                 writer.write(String.format("%f\n", weight));
             }
             writer.flush();
