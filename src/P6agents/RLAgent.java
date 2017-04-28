@@ -64,6 +64,11 @@ public class RLAgent extends Agent {
     public int triggerUnitId;
     public Order[] orders;
     public boolean isEvalEp;
+    public int epLeft = 0;
+    public int totalEp = 0;
+    public List<Double> testData; 
+    public Double[] cumulativeReward = new Double[5];
+    public Double epReward;
     public RLAgent(int playernum, String[] args) {
         super(playernum);
 
@@ -100,7 +105,15 @@ public class RLAgent extends Agent {
     public Map<Integer, Action> initialStep(State.StateView stateView, History.HistoryView historyView) {
 
         // You will need to add code to check if you are in a testing or learning episode
-    	
+    	if(epLeft == 0){
+    		if(totalEp == 0 || isEvalEp){
+    			epLeft = 10;
+    			isEvalEp = false;
+    		} else {
+    			epLeft = 5;
+    			isEvalEp = true;
+    		}
+    	}
         // Find all of your units
         myFootmen = new LinkedList<Integer>();
         int numFootmen = 0;
@@ -162,14 +175,13 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         //Check if an event has occurred, if it hasn't, just return same , we can catch that in 
-    	if(!hasEventOccurred(stateView)){
+    	if(!hasEventOccurred(stateView, historyView)){
     		return null;
     	} else {
     		//First, updateUnitLists to figure out who we have left
     		updateUnitLists(stateView);
     		//Next, determine what unit triggered the event should be triggerUnitId
     		//Right now this is always an enemy, check our current attack actions, see which of our units should be affected
-    		List<Order> affectedUnits = getAffectedUnits(stateView, triggerUnitId);
     		//if current attack order is attacking tUID, add them to the list
     		//Did that, should pull their orders off of the orders list here, so that # attacking computes correctly
     		
@@ -184,10 +196,21 @@ public class RLAgent extends Agent {
     				}
     			}
     		}
-    		Order[] newOrders = new Order[orders.length];
     		for(int id: myFootmen){
-    			selectAction(stateView, historyView, id);
+    			int target = selectAction(stateView, historyView, id);
+    			orders[id] = new Order(id, target);
+    			//TODO Implement the rest of the info we need for Order, like the feat and stuff
+    			
     		}
+    		//Create the actions list
+    		Map<Integer, Action> actions = new HashMap<Integer, Action>();
+    		for(Order o: orders){
+    			if(o != null){
+    				actions.put(o.attackerId, o.getSepAction());
+    			}
+    		}
+    		
+    		return actions;
     	}
     }
 
@@ -199,9 +222,26 @@ public class RLAgent extends Agent {
      */
     @Override
     public void terminalStep(State.StateView stateView, History.HistoryView historyView) {
-
+    	epLeft--;
         // MAKE SURE YOU CALL printTestData after you finish a test episode.
+    	if(!isEvalEp){
+    		totalEp++;
+    	} else {
+    		cumulativeReward[5 - epLeft + 1] = epReward;
+    		if(epLeft == 0){
+    			double average = 0;
+    			for(Double d: cumulativeReward){
+    				average += d;
+    			}
+    			average = average / 5;
+    			testData.add(average);
+    			cumulativeReward = new Double[5];
+    		}
+    	}
 
+    	if(totalEp/10 >= numEpisodes){
+    		printTestData(testData);
+    	}
         // Save your weights
         saveWeights(weights);
 
@@ -486,6 +526,7 @@ public class RLAgent extends Agent {
 	for(int i = 0; i <= featureVector.length - 1; i++) {
 		Qval = Qval + (featureVector[i] * weights[i]);
 	}
+	
 
 	return Qval;
 }
@@ -654,13 +695,12 @@ class Order {
 	public int attackerId;
 	public int defenderId;
 	public Double[] oldFeatures;
-	public Double[] oldWeights;
 	public Double QVal;
 	public Order(int aId, int dId){
 		this.attackerId = aId;
 		this.defenderId = dId;
 	}
-	public Action getSepOrder(){
+	public Action getSepAction(){
 		return Action.createCompoundAttack(attackerId, defenderId);
 	}
 }
