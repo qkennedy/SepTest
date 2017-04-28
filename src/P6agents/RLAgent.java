@@ -207,11 +207,25 @@ public class RLAgent extends Agent {
 
     }
     
-    public boolean hasEventOccurred(State.StateView stateView){
-    	boolean event = false;
-    	//Loop Through Enemies, see if any are dead, or at thresholds for starters 
-    	return event;
+    //Checks to see if an event has occurred. Returns true if so.
+    public boolean hasEventOccurred(State.StateView stateView, History.HistoryView historyView){
+        
+        int prevTurn = stateView.getTurnNumber() - 1;
+        boolean event = false;
+        
+        if(prevTurn < 0) {
+            return false;
+        }
+        
+        for(DeathLog deathLogs : historyView.getDeathLogs(prevTurn)) {
+            if (enemyFootmen.contains(deathLogs.getDeadUnitID())) {
+                event = true;
+            }
+        }
+        
+        return event;
     }
+    
     /**
      * 
      * @param stateView
@@ -289,12 +303,62 @@ public class RLAgent extends Agent {
      * @return The enemy footman ID this unit should attack
      */
     public int selectAction(State.StateView stateView, History.HistoryView historyView, int attackerId) {
-    	//find the order for this unit
-        //This is a case for when we aren't in first step, in this case, we should updateWeights
-    	if(stateView.getTurnNumber()!= 0){
+        
+        List<Integer> enemIDs = new ArrayList<Integer>();
+        List<Double> qVals = new ArrayList<Double>();
+        
+        //Populates two lists that work in tandem. One stores the enemy id, and the other stores the Q Val for that enemy.
+        //The position of the enemyID in enemIDs corresponds to the position of its Q value in qVals.
+        for (Integer enemy : enemyFootmen) {
+            
+            double QVal = calcQValue(stateView, historyView, attackerId, enemy);
+            enemIDs.add(enemy);
+            qVals.add(QVal);
+            
         }
-        return -1;
+        
+        double maxQVal = getMax(qVals);
+        int bestEnem = enemIDs.get(qVals.indexOf(maxQVal));
+        
+        //This block of code determines whether or not the agent should take a random action instead of the best action.
+        int randVal = generateRandomVal(0, 100);
+        double randFactor = (double)(randVal/100);
+        
+        if(randFactor <= epsilon) {
+            
+            int randomEnem = generateRandomVal(0, enemIDs.size() - 1);
+            return enemIDs.get(randomEnem);
+            
+        }
+        else {
+            
+            return bestEnem;
+            
+        }
+        
     }
+    
+    public int generateRandomVal(int min, int max) {
+        
+        int rangeVal = (max - min) + 1;
+        return (int)(Math.random() * rangeVal) + min;
+        
+    }
+    
+    //Returns the max value in a list.
+    public double getMax(List<Double> qValList) {
+        
+        double max = qValList.get(0);
+        
+        for(Double qVal : qValList) {
+            if(qVal >= max) {
+                max = qVal;
+            }
+        }
+        return max;
+    }
+    
+    
     public double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
     	return -1;
     }
@@ -332,7 +396,7 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
+    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
         
     	double damageReward = 0.0;
     	double actionReward = 0.0;
@@ -412,7 +476,7 @@ public double calculateReward(State.StateView stateView, History.HistoryView his
      * @param defenderId An enemy footman that your footman would be attacking
      * @return The approximate Q-value
      */
-public double calcQValue(State.StateView stateView,
+    public double calcQValue(State.StateView stateView,
 		History.HistoryView historyView,
 		int attackerId,
 		int defenderId) {
