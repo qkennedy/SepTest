@@ -1,3 +1,4 @@
-README Programming Assignment 6 Part 1:
+﻿README Programming Assignment 6 Part 1:
 
 Jack: For the first hour or so of our meetup, we outlined the goals of the assignment. I implemented the calculateReward and calculateQVal functions, as well as the calculateFeatureVector function (with its associated helper functions). Overall, I feel like we are in a good position for next week’s commit.
+Quinn - This week, I mostly worked on gaining an understanding of how this all should work.  I feel like many of the problems which have plagued our previous projects relate directly to a lack of forethought and planning when we are writing the code.  What I tried to do this time is spend more time writing up a clear, well defined explanation of how Q-Learning works, the details of the assignment, and also, an actual plan for method structure which ties those two together.  I have started laying out the results of this in middlestep, where I started laying out how this process should work, and writing a couple helper functions for the beginning stages of recognizing and responding to an event.  Also added the Order class.

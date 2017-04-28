@@ -56,13 +56,14 @@ public class RLAgent extends Agent {
      * but it is not recommended. If you do change them please let us know and explain your reasoning for
      * changing them.
      */
-    public final double gamma = 0.9;
-    public final double learningRate = .0001;
-    public final double epsilon = .02;
+    public final Double gamma = 0.9;
+    public final Double learningRate = .0001;
+    public final Double epsilon = .02;
     public int damagePerSwing;
     public int baseFMHealth;
     public int triggerUnitId;
-    public List<Order> orders;
+    public Order[] orders;
+    public boolean isEvalEp;
     public RLAgent(int playernum, String[] args) {
         super(playernum);
 
@@ -102,16 +103,19 @@ public class RLAgent extends Agent {
     	
         // Find all of your units
         myFootmen = new LinkedList<Integer>();
+        int numFootmen = 0;
         for (Integer unitId : stateView.getUnitIds(playernum)) {
             Unit.UnitView unit = stateView.getUnit(unitId);
 
             String unitName = unit.getTemplateView().getName().toLowerCase();
             if (unitName.equals("footman")) {
                 myFootmen.add(unitId);
+                numFootmen++;
             } else {
                 System.err.println("Unknown unit type: " + unitName);
             }
         }
+        orders = new Order[numFootmen];
 
         // Find all of the enemy units
         enemyFootmen = new LinkedList<Integer>();
@@ -168,17 +172,22 @@ public class RLAgent extends Agent {
     		List<Order> affectedUnits = getAffectedUnits(stateView, triggerUnitId);
     		//if current attack order is attacking tUID, add them to the list
     		//Did that, should pull their orders off of the orders list here, so that # attacking computes correctly
-    		for(int i = 0; i< affectedUnits.size(); i++){
-    			orders.remove(affectedUnits.get(i));
-    		}    		
-    		//Begin process of updating orders for each footman
-    		for(int i = 0; i < affectedUnits.size(); i++){ 	
-    			//This process begins with updating unit weights
-    			updateWeights()
-    		}
     		
-    		//
-    	
+    		//Begin process of updating orders for each footman
+    		if(!isEvalEp){
+    			for(int id: myFootmen){
+    				Order tmp = orders[id];
+    				if (tmp != null){
+    					Double reward = calculateReward(stateView, historyView, id);
+    					//double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId
+    					weights = updateWeights(weights,orders[id].oldFeatures, reward, stateView, historyView, id);
+    				}
+    			}
+    		}
+    		Order[] newOrders = new Order[orders.length];
+    		for(int id: myFootmen){
+    			selectAction(stateView, historyView, id);
+    		}
     	}
     }
 
@@ -201,7 +210,12 @@ public class RLAgent extends Agent {
     public boolean hasEventOccurred(State.StateView stateView){
     	boolean event = false;
     	//Loop Through Enemies, see if any are dead, or at thresholds for starters 
+    	return event;
     }
+    /**
+     * 
+     * @param stateView
+     */
     public void updateUnitLists(State.StateView stateView){
     	List<Integer> myUpdFootmen = new ArrayList<Integer>();
     	List<Integer> eUpdFootmen = new ArrayList<Integer>();
@@ -256,8 +270,13 @@ public class RLAgent extends Agent {
      * @param footmanId The footman we are updating the weights for
      * @return The updated weight vector.
      */
-    public double[] updateWeights(double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        return null;
+    public Double[] updateWeights(Double[] oldWeights, Double[] oldFeatures, Double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
+        Double[] newWeights = new Double[oldWeights.length];
+    	for(int i = 0; i < newWeights.length; i++){
+    		newWeights[i] = oldWeights[i] + learningRate*(totalReward + gamma*(getMaxQ(stateView, historyView, footmanId)))*oldFeatures[i];
+    	}
+    	return newWeights;
+    	
     }
 
     /**
@@ -270,7 +289,14 @@ public class RLAgent extends Agent {
      * @return The enemy footman ID this unit should attack
      */
     public int selectAction(State.StateView stateView, History.HistoryView historyView, int attackerId) {
+    	//find the order for this unit
+        //This is a case for when we aren't in first step, in this case, we should updateWeights
+    	if(stateView.getTurnNumber()!= 0){
+        }
         return -1;
+    }
+    public double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
+    	return -1;
     }
 
     /**
@@ -563,10 +589,14 @@ public double calcQValue(State.StateView stateView,
 class Order {
 	public int attackerId;
 	public int defenderId;
-	public double[] oldWeights;
-	public double[] oldFeatures;
+	public Double[] oldFeatures;
+	public Double[] oldWeights;
+	public Double QVal;
 	public Order(int aId, int dId){
 		this.attackerId = aId;
 		this.defenderId = dId;
+	}
+	public Action getSepOrder(){
+		return Action.createCompoundAttack(attackerId, defenderId);
 	}
 }
