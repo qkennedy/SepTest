@@ -178,9 +178,10 @@ public class RLAgent extends Agent {
     			for(int id: myFootmen){
     				Order tmp = orders[id];
     				if (tmp != null){
-    					Double reward = calculateReward(stateView, historyView, id);
-    					//double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId
-    					weights = updateWeights(weights,orders[id].oldFeatures, reward, stateView, historyView, id);
+                        
+                        tmp.QVal = calcQValue(stateView, historyView, tmp.attackerId, tmp.defenderId);
+                        tmp.oldFeatures = calculateFeatureVector(stateView, historyView, tmp.attackerId, tmp.defenderId);
+                        
     				}
     			}
     		}
@@ -317,7 +318,7 @@ public class RLAgent extends Agent {
             
         }
         
-        double maxQVal = getMax(qVals);
+        double maxQVal = getMaxQ(stateView, historyView, attackerId);
         int bestEnem = enemIDs.get(qVals.indexOf(maxQVal));
         
         //This block of code determines whether or not the agent should take a random action instead of the best action.
@@ -338,6 +339,7 @@ public class RLAgent extends Agent {
         
     }
     
+    //Generates a random value within a range.
     public int generateRandomVal(int min, int max) {
         
         int rangeVal = (max - min) + 1;
@@ -345,22 +347,26 @@ public class RLAgent extends Agent {
         
     }
     
-    //Returns the max value in a list.
-    public double getMax(List<Double> qValList) {
+    public double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
         
-        double max = qValList.get(0);
+        List<Double> qVals = new ArrayList<Double>();
         
-        for(Double qVal : qValList) {
-            if(qVal >= max) {
+        for (Integer enemy : enemyFootmen) {
+            
+            double QVal = calcQValue(stateView, historyView, attackerId, enemy);
+            qVals.add(QVal);
+            
+        }
+        
+        double max = qVals.get(0);
+        
+        for (Double qVal : qVals) {
+            if (qVal >= max) {
                 max = qVal;
             }
         }
+        
         return max;
-    }
-    
-    
-    public double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
-    	return -1;
     }
 
     /**
