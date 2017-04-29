@@ -62,7 +62,7 @@ public class RLAgent extends Agent {
     public int damagePerSwing;
     public int baseFMHealth;
     public int triggerUnitId;
-    public Order[] orders;
+    public Order[] orders = new Order[30];
     public boolean isEvalEp;
     public int epLeft = 0;
     public int totalEp = 0;
@@ -128,7 +128,6 @@ public class RLAgent extends Agent {
                 System.err.println("Unknown unit type: " + unitName);
             }
         }
-        orders = new Order[numFootmen];
 
         // Find all of the enemy units
         enemyFootmen = new LinkedList<Integer>();
@@ -175,7 +174,7 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         //Check if an event has occurred, if it hasn't, just return same , we can catch that in 
-    	if(!hasEventOccurred(stateView, historyView)){
+    	if(!hasEventOccurred(stateView, historyView) && stateView.getTurnNumber() != 0){
     		return null;
     	} else {
     		//First, updateUnitLists to figure out who we have left
@@ -205,7 +204,6 @@ public class RLAgent extends Agent {
                 
                 order.QVal = calcQValue(stateView, historyView, id, target);
                 order.oldFeatures = calculateFeatureVector(stateView, historyView, id, target);
-    			//TODO Implement the rest of the info we need for Order, like the feat and stuff
     			
     		}
     		//Create the actions list
@@ -233,7 +231,7 @@ public class RLAgent extends Agent {
     	if(!isEvalEp){
     		totalEp++;
     	} else {
-    		cumulativeReward[5 - epLeft + 1] = epReward;
+    		cumulativeReward[5 - epLeft] = epReward;
     		if(epLeft == 0){
     			double average = 0;
     			for(Double d: cumulativeReward){
@@ -294,7 +292,7 @@ public class RLAgent extends Agent {
 
              String unitName = unit.getTemplateView().getName().toLowerCase();
              if (unitName.equals("footman")) {
-                 enemyFootmen.add(unitId);
+                 eUpdFootmen.add(unitId);
              } else {
                  System.err.println("Unknown unit type: " + unitName);
              }
@@ -321,7 +319,6 @@ public class RLAgent extends Agent {
     }
     /**
      * Calculate the updated weights for this agent. 
-     * TODO I need to read into this and find out what determines these value changes.  Could be 21.13?
      * @param oldWeights Weights prior to update
      * @param oldFeatures Features from (s,a)
      * @param totalReward Cumulative discounted reward for this footman.
@@ -349,39 +346,31 @@ public class RLAgent extends Agent {
      * @return The enemy footman ID this unit should attack
      */
     public int selectAction(State.StateView stateView, History.HistoryView historyView, int attackerId) {
-        
-        List<Integer> enemIDs = new ArrayList<Integer>();
-        List<Double> qVals = new ArrayList<Double>();
-        
-        //Populates two lists that work in tandem. One stores the enemy id, and the other stores the Q Val for that enemy.
-        //The position of the enemyID in enemIDs corresponds to the position of its Q value in qVals.
+
+    	Double max = Double.MIN_VALUE;
+        int maxId = -1;
         for (Integer enemy : enemyFootmen) {
-            
-            Double QVal = calcQValue(stateView, historyView, attackerId, enemy);
-            enemIDs.add(enemy);
-            qVals.add(QVal);
-            
+        	Double tmp = calcQValue(stateView, historyView, attackerId, enemy);
+        	if(tmp > max){
+        		maxId = enemy;
+        		max = tmp;
+        	}
         }
-        
-        Double maxQVal = getMaxQ(stateView, historyView, attackerId);
-        int bestEnem = enemIDs.get(qVals.indexOf(maxQVal));
-        
+
         //This block of code determines whether or not the agent should take a random action instead of the best action.
         int randVal = generateRandomVal(0, 100);
         Double randFactor = (double)(randVal/100);
-        
+
         if(randFactor <= epsilon) {
-            
-            int randomEnem = generateRandomVal(0, enemIDs.size() - 1);
-            return enemIDs.get(randomEnem);
-            
+
+        	int randomEnem = generateRandomVal(0, enemyFootmen.size() - 1);
+        	return enemyFootmen.get(randomEnem);
+
+        } else {
+
+        	return maxId;
+
         }
-        else {
-            
-            return bestEnem;
-            
-        }
-        
     }
     
     //Generates a random value within a range.
@@ -394,23 +383,14 @@ public class RLAgent extends Agent {
     
     public Double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
         
-        List<Double> qVals = new ArrayList<Double>();
-        
+        Double max = Double.MIN_VALUE;
         for (Integer enemy : enemyFootmen) {
-            
-            Double QVal = calcQValue(stateView, historyView, attackerId, enemy);
-            qVals.add(QVal);
-            
-        }
-        
-        Double max = qVals.get(0);
-        
-        for (Double qVal : qVals) {
-            if (qVal >= max) {
-                max = qVal;
+        	Double tmp = calcQValue(stateView, historyView, attackerId, enemy);
+            if(tmp > max){
+            	max = tmp;
             }
+            
         }
-        
         return max;
     }
 
@@ -582,15 +562,15 @@ public class RLAgent extends Agent {
     public Double numFAttackingE(State.StateView stateView, History.HistoryView historyView, int enemId) {
         
         Double numAttackingE = 0.0;
-        
+
         for(Order order : orders) {
-            
-            if (enemId == order.defenderId) {
-                numAttackingE = numAttackingE + 1.0;
-            }
-            
+        	if(order != null){
+        		if (enemId == order.defenderId) {
+        			numAttackingE = numAttackingE + 1.0;
+        		}
+        	}            
         }
-        
+
         return numAttackingE;
     }
     
