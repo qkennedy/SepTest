@@ -24,7 +24,7 @@ public class RLAgent extends Agent {
      * and call sys.exit(0)
      */
     public final int numEpisodes;
-
+    public final boolean shouldPrint = true;
     /**
      * List of your footmen and your enemies footmen
      */
@@ -40,12 +40,12 @@ public class RLAgent extends Agent {
     /**
      * Set this to whatever size your feature vector is.
      */
-    public static final int NUM_FEATURES = 5;
+    public static final int NUM_FEATURES = 4;
 
     /** Use this random number generator for your epsilon exploration. When you submit we will
      * change this seed so make sure that your agent works for more than the default seed.
      */
-    public final Random random = new Random(12345);
+    public final Random random = new Random(54321);
     /**
      * Your Q-function weights.
      */
@@ -66,8 +66,9 @@ public class RLAgent extends Agent {
     public boolean isEvalEp;
     public int epLeft = 0;
     public int totalEp = 0;
-    public List<Double> testData; 
+    public List<Double> testData = new ArrayList<Double>(); 
     public Double[] cumulativeReward = new Double[5];
+    public Double[] rewards = new Double[30];
     public Double epReward;
     public RLAgent(int playernum, String[] args) {
         super(playernum);
@@ -174,8 +175,24 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         //Check if an event has occurred, if it hasn't, just return same , we can catch that in 
+    	if(stateView.getTurnNumber() != 0){
+    		double pTurnReward = 0;
+    		for(Integer id: myFootmen){
+    			double r = calculateReward(stateView, historyView, id);
+    			rewards[id] = r;
+    			pTurnReward += r;
+    		}
+    		epReward = pTurnReward;
+    	}
     	if(!hasEventOccurred(stateView, historyView) && stateView.getTurnNumber() != 0){
-    		return null;
+    		//State.StateView stateView, History.HistoryView historyView, int footmanId
+    		Map<Integer, Action> actions = new HashMap<Integer, Action>();
+    		for(Order o: orders){
+    			if(o != null){
+    				actions.put(o.attackerId, o.getSepAction());
+    			}
+    		}
+    		return actions;
     	} else {
     		//First, updateUnitLists to figure out who we have left
     		updateUnitLists(stateView);
@@ -189,11 +206,13 @@ public class RLAgent extends Agent {
     			for(int id: myFootmen){
     				Order tmp = orders[id];
     				if (tmp != null){
-                        
-                        tmp.QVal = calcQValue(stateView, historyView, tmp.attackerId, tmp.defenderId);
-                        tmp.oldFeatures = calculateFeatureVector(stateView, historyView, tmp.attackerId, tmp.defenderId);
+    					//Double[] oldWeights, Double[] oldFeatures, Double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId
+                        weights = updateWeights(weights, tmp.oldFeatures, rewards[id], stateView, historyView, id);
                         
     				}
+    			}
+    			if(shouldPrint){
+    				System.out.println(Arrays.toString(weights));
     			}
     		}
     		for(int id: myFootmen){
@@ -226,23 +245,27 @@ public class RLAgent extends Agent {
      */
     @Override
     public void terminalStep(State.StateView stateView, History.HistoryView historyView) {
-    	epLeft--;
+    	
         // MAKE SURE YOU CALL printTestData after you finish a test episode.
     	if(!isEvalEp){
     		totalEp++;
     	} else {
     		cumulativeReward[5 - epLeft] = epReward;
-    		if(epLeft == 0){
+    		if(epLeft == 1){
     			double average = 0;
     			for(Double d: cumulativeReward){
     				average += d;
     			}
     			average = average / 5;
     			testData.add(average);
+    			if(shouldPrint){
+    				System.out.println("Done with eval Period");
+    				System.out.println(Arrays.toString(cumulativeReward));
+    			}
     			cumulativeReward = new Double[5];
     		}
     	}
-
+    	epLeft--;
     	if(totalEp/10 >= numEpisodes){
     		printTestData(testData);
     	}
@@ -262,9 +285,7 @@ public class RLAgent extends Agent {
         }
         
         for(DeathLog deathLogs : historyView.getDeathLogs(prevTurn)) {
-            if (enemyFootmen.contains(deathLogs.getDeadUnitID())) {
                 event = true;
-            }
         }
         
         return event;
@@ -330,7 +351,7 @@ public class RLAgent extends Agent {
     public Double[] updateWeights(Double[] oldWeights, Double[] oldFeatures, Double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
         Double[] newWeights = new Double[oldWeights.length];
     	for(int i = 0; i < newWeights.length; i++){
-    		newWeights[i] = oldWeights[i] + learningRate*(totalReward + gamma*(getMaxQ(stateView, historyView, footmanId)))*oldFeatures[i];
+    		newWeights[i] = oldWeights[i] + learningRate*(totalReward + gamma*(getMaxQ(stateView, historyView, footmanId)-orders[footmanId].QVal))*oldFeatures[i];
     	}
     	return newWeights;
     	
@@ -347,10 +368,13 @@ public class RLAgent extends Agent {
      */
     public int selectAction(State.StateView stateView, History.HistoryView historyView, int attackerId) {
 
-    	Double max = Double.MIN_VALUE;
+    	Double max = Double.NEGATIVE_INFINITY;
         int maxId = -1;
         for (Integer enemy : enemyFootmen) {
         	Double tmp = calcQValue(stateView, historyView, attackerId, enemy);
+        	if(shouldPrint){
+        		System.out.println(tmp);
+        	}
         	if(tmp > max){
         		maxId = enemy;
         		max = tmp;
@@ -383,7 +407,7 @@ public class RLAgent extends Agent {
     
     public Double getMaxQ(State.StateView stateView, History.HistoryView historyView, int attackerId){
         
-        Double max = Double.MIN_VALUE;
+        Double max = Double.NEGATIVE_INFINITY;
         for (Integer enemy : enemyFootmen) {
         	Double tmp = calcQValue(stateView, historyView, attackerId, enemy);
             if(tmp > max){
@@ -454,10 +478,6 @@ public class RLAgent extends Agent {
     			damageReward = damageReward + damageAmt;
     	
     			//Checks to see if the unit the friendly footman attacked was killed. If so, then a reward is given.
-    		    UnitView enemUnit = stateView.getUnit(defenderId);
-    		    if(enemUnit.getHP() <= 0) {
-    		    	deathReward = deathReward + 100.0;
-    		    }
     		    
     		} else if (defenderId == id) {
     			damageReward = damageReward - damageAmt;
