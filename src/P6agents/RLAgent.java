@@ -198,8 +198,13 @@ public class RLAgent extends Agent {
     			}
     		}
     		for(int id: myFootmen){
-    			int target = selectAction(stateView, historyView, id);
-    			orders[id] = new Order(id, target);
+                int target = selectAction(stateView, historyView, id);
+                orders[id] = new Order(id, target);
+                
+                Order order = orders[id];
+                
+                order.QVal = calcQValue(stateView, historyView, id, target);
+                order.oldFeatures = calculateFeatureVector(stateView, historyView, id, target);
     			//TODO Implement the rest of the info we need for Order, like the feat and stuff
     			
     		}
