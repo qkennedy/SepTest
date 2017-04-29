@@ -24,7 +24,7 @@ public class RLAgent extends Agent {
      * and call sys.exit(0)
      */
     public final int numEpisodes;
-    public final boolean shouldPrint = true;
+    public final boolean shouldPrint = false;
     /**
      * List of your footmen and your enemies footmen
      */
@@ -268,6 +268,7 @@ public class RLAgent extends Agent {
     	epLeft--;
     	if(totalEp/10 >= numEpisodes){
     		printTestData(testData);
+    		System.exit(0);
     	}
         // Save your weights
         saveWeights(weights);
